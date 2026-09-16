@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>부품 바코드 스캔</title>
+
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+<style>
+body{
+  margin:0;
+  padding:20px;
+  background:#111827;
+  color:white;
+  font-family:Arial,"Noto Sans KR",sans-serif;
+  text-align:center;
+}
+
+h2{
+  margin:10px 0;
+}
+
+p{
+  color:#d1d5db;
+}
+
+#reader{
+  width:100%;
+  max-width:500px;
+  margin:20px auto;
+}
+
+#result{
+  margin:20px auto;
+  padding:15px;
+  max-width:450px;
+  border-radius:12px;
+  background:#1f2937;
+  font-size:18px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>📷 부품 바코드 스캔</h2>
+
+<p>바코드를 카메라 중앙에 맞춰주세요.</p>
+
+<div id="reader"></div>
+
+<div id="result">
+바코드를 찾는 중...
+</div>
+
+<script>
+
+const returnUrl =
+"https://script.google.com/macros/s/AKfycbyj_xWMSMx-EeWZxyT7I6rXe52UpAGcVpN3-LPPMZeQakUJRtogd5AkULshza7ICeCVCg/exec";
+
+let scanned = false;
+
+function onScanSuccess(decodedText) {
+
+  if (scanned) return;
+
+  scanned = true;
+
+  document.getElementById("result").innerHTML =
+    "✅ 인식 완료<br><b>" +
+    decodedText +
+    "</b><br><br>부품 정보를 불러오는 중...";
+
+  html5QrcodeScanner.clear().then(function() {
+
+    const url =
+      returnUrl +
+      "?barcode=" +
+      encodeURIComponent(decodedText);
+
+    window.location.href = url;
+
+  }).catch(function() {
+
+    const url =
+      returnUrl +
+      "?barcode=" +
+      encodeURIComponent(decodedText);
+
+    window.location.href = url;
+
+  });
+}
+
+function onScanFailure(error) {
+  // 계속 자동으로 스캔
+}
+
+const html5QrcodeScanner =
+  new Html5QrcodeScanner(
+    "reader",
+    {
+      fps: 10,
+      qrbox: {
+        width: 280,
+        height: 150
+      },
+      rememberLastUsedCamera: true,
+      supportedScanTypes: [
+        Html5QrcodeScanType.SCAN_TYPE_CAMERA
+      ]
+    },
+    false
+  );
+
+html5QrcodeScanner.render(
+  onScanSuccess,
+  onScanFailure
+);
+
+</script>
+
+</body>
+</html>
