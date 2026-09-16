@@ -1,402 +1,813 @@
 ```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0,
+               maximum-scale=1.0, user-scalable=no">
+
+<title>부품 재고 조회</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.min.js"></script>
+
+<style>
+
+*{
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
+}
+
+body{
+    margin:0;
+    padding:0;
+    background:#f5f5f5;
+    color:#111;
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Noto Sans KR",
+        Arial,
+        sans-serif;
+}
+
+.container{
+    width:100%;
+    max-width:760px;
+    margin:0 auto;
+    padding:24px 16px 50px;
+}
+
+h1{
+    text-align:center;
+    font-size:36px;
+    margin:30px 0 40px;
+    font-weight:800;
+}
+
+button{
+    border:0;
+    border-radius:16px;
+    font-size:20px;
+    font-weight:700;
+    cursor:pointer;
+    touch-action:manipulation;
+}
+
+.main-button{
+    width:100%;
+    height:70px;
+    background:#222;
+    color:white;
+    margin-bottom:20px;
+}
+
+.main-button:active{
+    transform:scale(.98);
+}
+
+/* =========================
+   스캐너
+========================= */
+
+#scannerBox{
+    display:none;
+    position:relative;
+    width:100%;
+    background:#000;
+    border-radius:22px;
+    overflow:hidden;
+    margin-bottom:20px;
+}
+
+#scanner{
+    position:relative;
+    width:100%;
+    height:430px;
+    background:#000;
+    overflow:hidden;
+}
+
+#scanner video{
+    width:100% !important;
+    height:100% !important;
+    object-fit:cover !important;
+}
+
+#scanner canvas{
+    position:absolute !important;
+    left:0 !important;
+    top:0 !important;
+    width:100% !important;
+    height:100% !important;
+    pointer-events:none;
+}
+
+/* =========================
+   스캔 가이드
+========================= */
+
+.scan-guide{
+    position:absolute;
+    left:4%;
+    right:4%;
+    top:50%;
+    height:145px;
+    transform:translateY(-50%);
+    border:3px solid white;
+    border-radius:14px;
+    z-index:20;
+    pointer-events:none;
+
+    box-shadow:
+        0 0 0 9999px rgba(0,0,0,.28);
+}
+
+.scan-guide::after{
+    content:"";
+    position:absolute;
+    left:4%;
+    right:4%;
+    top:50%;
+    height:3px;
+    background:#ff3b30;
+    box-shadow:0 0 10px #ff3b30;
+
+    animation:scanline 1.5s infinite;
+}
+
+@keyframes scanline{
+
+    0%{
+        opacity:.4;
+        transform:translateY(-55px);
+    }
+
+    50%{
+        opacity:1;
+        transform:translateY(55px);
+    }
+
+    100%{
+        opacity:.4;
+        transform:translateY(-55px);
+    }
+}
+
+.corner{
+    position:absolute;
+    width:30px;
+    height:30px;
+    border-color:white;
+    border-style:solid;
+}
+
+.corner.tl{
+    left:-3px;
+    top:-3px;
+    border-width:5px 0 0 5px;
+}
+
+.corner.tr{
+    right:-3px;
+    top:-3px;
+    border-width:5px 5px 0 0;
+}
+
+.corner.bl{
+    left:-3px;
+    bottom:-3px;
+    border-width:0 0 5px 5px;
+}
+
+.corner.br{
+    right:-3px;
+    bottom:-3px;
+    border-width:0 5px 5px 0;
+}
+
+/* =========================
+   스캔 메시지
+========================= */
+
+.scan-message{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:18px;
+    text-align:center;
+    color:white;
+    font-size:15px;
+    font-weight:700;
+    z-index:30;
+    text-shadow:0 2px 6px #000;
+}
+
+#scanConfirm{
+    position:absolute;
+    left:0;
+    right:0;
+    top:18px;
+    text-align:center;
+    color:white;
+    font-size:15px;
+    font-weight:800;
+    z-index:30;
+    text-shadow:0 2px 6px #000;
+}
+
+/* =========================
+   컨트롤
+========================= */
+
+.scanner-controls{
+    display:flex;
+    gap:8px;
+    padding:10px;
+    background:#111;
+}
+
+.scanner-controls button{
+    flex:1;
+    height:48px;
+    background:#333;
+    color:white;
+    font-size:15px;
+}
+
+.close-button{
+    width:100%;
+    height:55px;
+    margin-top:10px;
+    background:#e5e5e5;
+    color:#111;
+}
+
+/* =========================
+   원본값 디버그
+========================= */
+
+#rawBox{
+    display:none;
+    background:#fff7ed;
+    border:1px solid #fed7aa;
+    border-radius:14px;
+    padding:14px;
+    margin-top:12px;
+}
+
+.raw-title{
+    color:#9a3412;
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:6px;
+}
+
+.raw-value{
+    font-size:19px;
+    font-weight:700;
+    word-break:break-all;
+}
+
+.raw-clean{
+    color:#666;
+    font-size:14px;
+    margin-top:6px;
+    word-break:break-all;
+}
+
+/* =========================
+   최종 인식값
+========================= */
+
+#detectedBox{
+    display:none;
+    background:white;
+    border-radius:14px;
+    padding:16px;
+    margin-top:12px;
+    box-shadow:0 2px 10px rgba(0,0,0,.06);
+    text-align:center;
+}
+
+.detected-title{
+    color:#777;
+    font-size:13px;
+    margin-bottom:5px;
+}
+
+#detectedNumber{
+    font-size:28px;
+    font-weight:800;
+    letter-spacing:1px;
+}
+
+/* =========================
+   결과
+========================= */
+
+.card{
+    background:white;
+    border-radius:18px;
+    padding:20px;
+    margin-top:16px;
+    box-shadow:0 3px 15px rgba(0,0,0,.08);
+}
+
+.label{
+    color:#777;
+    font-size:14px;
+    margin-bottom:6px;
+}
+
+.value{
+    font-size:22px;
+    font-weight:700;
+    word-break:break-all;
+}
+
+.result-row{
+    padding:14px 0;
+    border-bottom:1px solid #eee;
+}
+
+.result-row:last-child{
+    border-bottom:0;
+}
+
+/* =========================
+   수동 입력
+========================= */
+
+.manual{
+    display:none;
+    margin-top:20px;
+}
+
+input{
+    width:100%;
+    height:55px;
+    border:1px solid #ccc;
+    border-radius:12px;
+    padding:0 15px;
+    font-size:18px;
+    background:white;
+}
+
+.manual button{
+    width:100%;
+    height:55px;
+    margin-top:10px;
+    background:#222;
+    color:white;
+}
+
+/* =========================
+   상태
+========================= */
+
+.status{
+    text-align:center;
+    font-size:16px;
+    color:#666;
+    margin:12px 0;
+    min-height:24px;
+}
+
+.success{
+    color:#16833b;
+    font-weight:700;
+}
+
+.error{
+    color:#d93025;
+    font-weight:700;
+}
+
+.warning{
+    color:#9a6700;
+    font-weight:700;
+}
+
+/* =========================
+   로딩
+========================= */
+
+.loading{
+    display:none;
+    text-align:center;
+    padding:30px 10px;
+    font-size:17px;
+}
+
+/* =========================
+   모바일
+========================= */
+
+@media(max-width:600px){
+
+    .container{
+        padding:18px 12px 40px;
+    }
+
+    h1{
+        font-size:34px;
+        margin:25px 0 35px;
+    }
+
+    #scanner{
+        height:430px;
+    }
+
+    .scan-guide{
+        left:4%;
+        right:4%;
+        height:135px;
+    }
+}
+
+</style>
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <h1>부품 재고 조회</h1>
+
+
+    <!-- 스캔 버튼 -->
+
+    <button
+        id="scanButton"
+        class="main-button"
+        onclick="startScanner()">
+
+        📷 바코드 스캔
+
+    </button>
+
+
+    <!-- 스캐너 -->
+
+    <div id="scannerBox">
+
+        <div id="scanner">
+
+            <div id="scanConfirm"></div>
+
+
+            <div class="scan-guide">
+
+                <div class="corner tl"></div>
+                <div class="corner tr"></div>
+                <div class="corner bl"></div>
+                <div class="corner br"></div>
+
+            </div>
+
+
+            <div class="scan-message">
+
+                바코드를 사각형 안에
+                크게 맞춰주세요
+
+            </div>
+
+        </div>
+
+
+        <div class="scanner-controls">
+
+            <button onclick="zoomOut()">
+                − 줌
+            </button>
+
+            <button onclick="toggleTorch()">
+                🔦 조명
+            </button>
+
+            <button onclick="zoomIn()">
+                ＋ 줌
+            </button>
+
+        </div>
+
+
+        <button
+            class="close-button"
+            onclick="stopScanner()">
+
+            스캔 종료
+
+        </button>
+
+    </div>
+
+
+    <!-- 상태 -->
+
+    <div
+        id="status"
+        class="status">
+    </div>
+
+
+    <!-- ★ 바코드 원본값 -->
+
+    <div id="rawBox">
+
+        <div class="raw-title">
+            바코드 원본 인식값
+        </div>
+
+        <div
+            id="rawValue"
+            class="raw-value">
+        </div>
+
+        <div
+            id="cleanValue"
+            class="raw-clean">
+        </div>
+
+    </div>
+
+
+    <!-- 최종 11자리 -->
+
+    <div id="detectedBox">
+
+        <div class="detected-title">
+            최종 인식된 Material No.
+        </div>
+
+        <div
+            id="detectedNumber">
+        </div>
+
+    </div>
+
+
+    <!-- 수동 입력 -->
+
+    <div
+        class="manual"
+        id="manualBox">
+
+        <input
+            id="manualBarcode"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            placeholder="Material No. 직접 입력">
+
+        <button onclick="manualSearch()">
+            부품 조회
+        </button>
+
+    </div>
+
+
+    <!-- 로딩 -->
+
+    <div
+        id="loading"
+        class="loading">
+
+        🔍 부품 정보를 조회하고 있습니다...
+
+    </div>
+
+
+    <!-- 결과 -->
+
+    <div id="result"></div>
+
+</div>
+
+
 <script>
 
 /* ============================================================
-   바코드 인식 설정
+   설정
 ============================================================ */
 
-/*
- * 최종적으로 인정할 Material No. 길이
- */
-const MATERIAL_NO_LENGTH = 11;
-
+const MATERIAL_LENGTH = 11;
 
 /*
- * 같은 값이 몇 번 연속 확인되어야 확정할지
+ * 같은 11자리 번호를
+ * 몇 번 확인할지
  */
 const REQUIRED_CONFIRMATIONS = 3;
 
-
 /*
- * 같은 값 확인 제한 시간
+ * 같은 번호를 확인할 수 있는 시간
  */
-const CONFIRM_WINDOW_MS = 2000;
-
-
-/*
- * 상태
- */
-let candidateValue = "";
-let candidateCount = 0;
-let candidateStartTime = 0;
+const CONFIRM_WINDOW = 2000;
 
 
 /* ============================================================
-   숫자만 정리
+   상태
 ============================================================ */
 
-function normalizeBarcode(raw){
+let scannerRunning = false;
 
-    if(
-        raw === null ||
-        raw === undefined
-    ){
-        return "";
-    }
+let currentTrack = null;
 
+let currentZoom = 1;
 
-    /*
-     * 바코드 리더가 읽은 값을 문자열로 변환
-     */
-    let value =
-        String(raw)
-            .trim();
+let minZoom = 1;
+
+let maxZoom = 1;
+
+let torchOn = false;
 
 
-    /*
-     * 바코드 값 안의 공백 / 하이픈 제거
-     *
-     * 예:
-     * 123 456 789 01
-     * 123-456-789-01
-     *
-     * → 숫자만 남김
-     */
-    value =
-        value.replace(
-            /[^0-9]/g,
-            ""
+/*
+ * 현재 후보
+ */
+
+let candidate = "";
+
+let candidateCount = 0;
+
+let candidateStart = 0;
+
+
+/*
+ * 마지막 확정값
+ */
+
+let acceptedCode = "";
+
+let acceptedTime = 0;
+
+
+/*
+ * 이벤트 중복 방지
+ */
+
+let handlerAttached = false;
+
+
+/* ============================================================
+   상태 메시지
+============================================================ */
+
+function setStatus(
+    message,
+    type = ""
+){
+
+    const el =
+        document.getElementById(
+            "status"
         );
 
+    el.textContent =
+        message;
 
-    return value;
+    el.className =
+        "status";
+
+    if(type){
+
+        el.classList.add(
+            type
+        );
+
+    }
 
 }
 
 
 /* ============================================================
-   ★ 핵심
-   정확히 11자리일 때만 인정
+   원본 바코드 표시
 ============================================================ */
 
-function getValidMaterialNo(raw){
-
-    const value =
-        normalizeBarcode(raw);
-
-
-    /*
-     * 정확히 11자리만 통과
-     */
-    if(
-        value.length !==
-        MATERIAL_NO_LENGTH
-    ){
-
-        return null;
-
-    }
-
-
-    /*
-     * 숫자 외 문자가 섞인 결과도
-     * normalize 후 정확히 11자리면 통과
-     */
-    if(
-        !/^\d{11}$/.test(value)
-    ){
-
-        return null;
-
-    }
-
-
-    return value;
-
-}
-
-
-/* ============================================================
-   동일 바코드 확인
-============================================================ */
-
-function confirmBarcode(raw){
-
-    /*
-     * 정확히 11자리인지 먼저 확인
-     */
-    const materialNo =
-        getValidMaterialNo(raw);
-
-
-    /*
-     * 11자리가 아니면 무조건 무시
-     */
-    if(!materialNo){
-
-        return null;
-
-    }
-
-
-    const now =
-        Date.now();
-
-
-    /*
-     * 이전 후보와 같은 값이고
-     * 시간 안에 다시 감지되었다면 카운트 증가
-     */
-    if(
-        materialNo === candidateValue &&
-        now - candidateStartTime <=
-        CONFIRM_WINDOW_MS
-    ){
-
-        candidateCount++;
-
-    }else{
-
-        /*
-         * 새로운 후보
-         */
-        candidateValue =
-            materialNo;
-
-        candidateCount = 1;
-
-        candidateStartTime =
-            now;
-
-    }
-
-
-    /*
-     * 화면에 현재 후보 표시
-     */
-    showDetectedNumber(
-        materialNo
-    );
-
-
-    setScanConfirmMessage(
-        "11자리 확인 중 " +
-        Math.min(
-            candidateCount,
-            REQUIRED_CONFIRMATIONS
-        ) +
-        "/" +
-        REQUIRED_CONFIRMATIONS
-    );
-
-
-    /*
-     * 3번 같은 값이면 최종 확정
-     */
-    if(
-        candidateCount >=
-        REQUIRED_CONFIRMATIONS
-    ){
-
-        return materialNo;
-
-    }
-
-
-    return null;
-
-}
-
-
-/* ============================================================
-   Quagga 바코드 감지
-============================================================ */
-
-function processDetectedBarcode(result){
-
-    if(!scannerRunning){
-
-        return;
-
-    }
-
-
-    if(
-        !result ||
-        !result.codeResult
-    ){
-
-        return;
-
-    }
-
-
-    const raw =
-        result.codeResult.code;
-
-
-    if(!raw){
-
-        return;
-
-    }
-
-
-    console.log(
-        "바코드 원본:",
-        raw,
-        "형식:",
-        result.codeResult.format
-    );
-
-
-    /*
-     * ★ 여기서 11자리인지 확인
-     */
-    const accepted =
-        confirmBarcode(raw);
-
-
-    /*
-     * 아직 3번 확인되지 않았다면 종료
-     */
-    if(!accepted){
-
-        return;
-
-    }
-
-
-    /*
-     * 최종 확정
-     */
-    console.log(
-        "최종 Material No.:",
-        accepted
-    );
-
-
-    acceptBarcode(
-        accepted
-    );
-
-}
-
-
-/* ============================================================
-   최종 확정
-============================================================ */
-
-function acceptBarcode(materialNo){
-
-    /*
-     * 카메라 종료
-     */
-    stopScanner();
-
-
-    /*
-     * 표시
-     */
-    document
-        .getElementById(
-            "detectedNumber"
-        )
-        .textContent =
-        materialNo;
-
+function showRawValue(
+    raw,
+    cleaned
+){
 
     document
         .getElementById(
-            "detectedBox"
+            "rawBox"
         )
         .style.display =
         "block";
 
 
-    setStatus(
-        "✅ 11자리 Material No. 인식 완료: " +
-        materialNo,
-        "success"
-    );
+    document
+        .getElementById(
+            "rawValue"
+        )
+        .textContent =
+        raw;
 
 
-    /*
-     * 기존 조회 함수
-     */
-    lookupPart(
-        materialNo
-    );
-
-}
-
-
-/* ============================================================
-   인식값 표시
-============================================================ */
-
-function showDetectedNumber(value){
-
-    const box =
-        document.getElementById(
-            "detectedBox"
-        );
-
-    const number =
-        document.getElementById(
-            "detectedNumber"
-        );
-
-
-    box.style.display =
-        "block";
-
-
-    number.textContent =
-        value;
+    document
+        .getElementById(
+            "cleanValue"
+        )
+        .textContent =
+        "숫자 정리 결과: " +
+        cleaned;
 
 }
 
 
 /* ============================================================
-   스캔 안내
+   11자리 후보 검사
 ============================================================ */
 
-function setScanConfirmMessage(message){
+function getExact11Digits(raw){
 
-    const el =
-        document.getElementById(
-            "scanConfirm"
-        );
+    if(
+        raw === null ||
+        raw === undefined
+    ){
 
-
-    if(el){
-
-        el.textContent =
-            message;
+        return null;
 
     }
 
+
+    const text =
+        String(raw).trim();
+
+
+    /*
+     * 바코드 자체가 숫자 + 공백 정도라면
+     * 공백을 제거하여 11자리 검사
+     */
+    const cleaned =
+        text.replace(
+            /[^0-9]/g,
+            ""
+        );
+
+
+    /*
+     * ★ 절대 앞/뒤를 잘라내지 않는다.
+     *
+     * 10자리 → 탈락
+     * 12자리 → 탈락
+     * 15자리 → 탈락
+     *
+     * 정확히 11자리만 통과
+     */
+
+    if(
+        cleaned.length !==
+        MATERIAL_LENGTH
+    ){
+
+        return null;
+
+    }
+
+
+    /*
+     * 숫자로만 이루어졌는지 최종 확인
+     */
+
+    if(
+        !/^\d{11}$/.test(
+            cleaned
+        )
+    ){
+
+        return null;
+
+    }
+
+
+    return cleaned;
+
 }
 
 
 /* ============================================================
-   스캐너 시작 시 후보 초기화
+   후보 초기화
 ============================================================ */
 
-function resetBarcodeCandidate(){
+function resetCandidate(){
 
-    candidateValue = "";
+    candidate = "";
 
     candidateCount = 0;
 
-    candidateStartTime = 0;
+    candidateStart = 0;
 
 }
 
 
 /* ============================================================
-   스캐너 시작
+   시작
 ============================================================ */
 
 async function startScanner(){
@@ -408,10 +819,12 @@ async function startScanner(){
     }
 
 
-    /*
-     * ★ 이전 오인식 값 초기화
-     */
-    resetBarcodeCandidate();
+    resetCandidate();
+
+
+    acceptedCode = "";
+
+    acceptedTime = 0;
 
 
     document
@@ -440,15 +853,26 @@ async function startScanner(){
 
     document
         .getElementById(
+            "rawBox"
+        )
+        .style.display =
+        "none";
+
+
+    document
+        .getElementById(
             "detectedBox"
         )
         .style.display =
         "none";
 
 
-    setScanConfirmMessage(
-        ""
-    );
+    document
+        .getElementById(
+            "scanConfirm"
+        )
+        .textContent =
+        "";
 
 
     setStatus(
@@ -463,14 +887,19 @@ async function startScanner(){
 
     }catch(error){
 
-        console.error(error);
+        console.error(
+            error
+        );
 
-        scannerRunning = false;
+        scannerRunning =
+            false;
+
 
         setStatus(
-            "카메라를 열 수 없습니다.",
+            "카메라를 사용할 수 없습니다.",
             "error"
         );
+
 
         showManualBox();
 
@@ -489,7 +918,9 @@ function initializeQuagga(){
         function(resolve,reject){
 
             try{
+
                 Quagga.stop();
+
             }catch(e){}
 
 
@@ -527,7 +958,7 @@ function initializeQuagga(){
                     },
 
                     /*
-                     * 중앙 영역 중심으로 분석
+                     * 가운데 영역 집중
                      */
                     area:{
                         top:"20%",
@@ -539,6 +970,9 @@ function initializeQuagga(){
                 },
 
 
+                /*
+                 * 인식률 개선
+                 */
                 locator:{
 
                     /*
@@ -547,7 +981,7 @@ function initializeQuagga(){
                     halfSample:false,
 
                     /*
-                     * 작은 바코드 대응
+                     * 너무 작게 잡지 않기
                      */
                     patchSize:"medium"
 
@@ -562,13 +996,8 @@ function initializeQuagga(){
                 decoder:{
 
                     /*
-                     * 우선순위를 줄임
-                     *
-                     * 실제 바코드 형식을 모를 때는
-                     * 여러 reader를 유지하되,
-                     * 최종적으로 정확히 11자리인 것만 통과시킨다.
+                     * 주요 1D 바코드 형식
                      */
-
                     readers:[
 
                         "code_128_reader",
@@ -599,6 +1028,7 @@ function initializeQuagga(){
 
 
                 numOfWorkers:2,
+
 
                 debug:{
 
@@ -639,16 +1069,19 @@ function initializeQuagga(){
                 }
 
 
+                setStatus(
+                    "바코드를 사각형 안에 크게 맞춰주세요.",
+                    "warning"
+                );
+
+
                 setTimeout(
                     setupCameraTrack,
                     800
                 );
 
 
-                setStatus(
-                    "바코드를 사각형 안에 크게 맞춰주세요.",
-                    "warning"
-                );
+                attachHandler();
 
 
                 resolve();
@@ -662,16 +1095,438 @@ function initializeQuagga(){
 
 
 /* ============================================================
-   바코드 검출 이벤트
+   카메라 트랙
 ============================================================ */
 
-if(!window.__barcodeHandlerAttached){
+function setupCameraTrack(){
 
-    window.__barcodeHandlerAttached =
+    try{
+
+        const video =
+            document.querySelector(
+                "#scanner video"
+            );
+
+
+        if(
+            !video ||
+            !video.srcObject
+        ){
+
+            return;
+
+        }
+
+
+        const tracks =
+            video
+                .srcObject
+                .getVideoTracks();
+
+
+        if(
+            !tracks ||
+            !tracks.length
+        ){
+
+            return;
+
+        }
+
+
+        currentTrack =
+            tracks[0];
+
+
+        setupCameraCapabilities();
+
+
+    }catch(error){
+
+        console.log(
+            error
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   카메라 기능
+============================================================ */
+
+function setupCameraCapabilities(){
+
+    if(!currentTrack){
+
+        return;
+
+    }
+
+
+    try{
+
+        const capabilities =
+            currentTrack.getCapabilities
+                ? currentTrack.getCapabilities()
+                : {};
+
+
+        /*
+         * 줌
+         */
+
+        if(
+            capabilities.zoom
+        ){
+
+            minZoom =
+                capabilities.zoom.min ||
+                1;
+
+            maxZoom =
+                capabilities.zoom.max ||
+                1;
+
+
+            currentZoom =
+                Math.min(
+                    Math.max(
+                        1.5,
+                        minZoom
+                    ),
+                    maxZoom
+                );
+
+
+            applyZoom();
+
+        }
+
+
+        /*
+         * 자동 초점
+         */
+
+        if(
+            capabilities.focusMode
+        ){
+
+            if(
+                capabilities
+                    .focusMode
+                    .includes(
+                        "continuous"
+                    )
+            ){
+
+                try{
+
+                    currentTrack
+                        .applyConstraints({
+
+                            advanced:[
+                                {
+                                    focusMode:
+                                        "continuous"
+                                }
+                            ]
+
+                        });
+
+                }catch(e){}
+
+            }
+
+        }
+
+    }catch(error){
+
+        console.log(
+            error
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   Quagga 이벤트
+============================================================ */
+
+function attachHandler(){
+
+    if(handlerAttached){
+
+        return;
+
+    }
+
+    handlerAttached =
         true;
 
+
     Quagga.onDetected(
-        processDetectedBarcode
+        processBarcode
+    );
+
+}
+
+
+/* ============================================================
+   ★ 바코드 처리
+============================================================ */
+
+function processBarcode(result){
+
+    if(!scannerRunning){
+
+        return;
+
+    }
+
+
+    if(
+        !result ||
+        !result.codeResult
+    ){
+
+        return;
+
+    }
+
+
+    const raw =
+        result.codeResult.code;
+
+
+    if(!raw){
+
+        return;
+
+    }
+
+
+    console.log(
+        "======================"
+    );
+
+    console.log(
+        "바코드 원본:",
+        raw
+    );
+
+    console.log(
+        "바코드 형식:",
+        result.codeResult.format
+    );
+
+    console.log(
+        "======================"
+    );
+
+
+    /*
+     * 숫자 정리
+     */
+
+    const cleaned =
+        String(raw)
+            .replace(
+                /[^0-9]/g,
+                ""
+            );
+
+
+    /*
+     * ★ 디버깅을 위해 원본값 표시
+     */
+
+    showRawValue(
+        raw,
+        cleaned
+    );
+
+
+    /*
+     * ★ 정확히 11자리인지 확인
+     */
+
+    const materialNo =
+        getExact11Digits(
+            raw
+        );
+
+
+    /*
+     * 11자리 아니면 절대 인정하지 않음
+     */
+
+    if(!materialNo){
+
+        setStatus(
+            "바코드는 읽었지만 11자리 Material No.가 아닙니다.",
+            "warning"
+        );
+
+
+        document
+            .getElementById(
+                "scanConfirm"
+            )
+            .textContent =
+            "인식값 확인 중...";
+
+
+        return;
+
+    }
+
+
+    /*
+     * 이미 방금 확정한 값이면 무시
+     */
+
+    const now =
+        Date.now();
+
+
+    if(
+        materialNo ===
+        acceptedCode &&
+        now - acceptedTime < 3000
+    ){
+
+        return;
+
+    }
+
+
+    /*
+     * 동일한 값인지 확인
+     */
+
+    if(
+        materialNo === candidate &&
+        now - candidateStart <=
+        CONFIRM_WINDOW
+    ){
+
+        candidateCount++;
+
+    }else{
+
+        candidate =
+            materialNo;
+
+        candidateCount =
+            1;
+
+        candidateStart =
+            now;
+
+    }
+
+
+    /*
+     * 현재 후보 표시
+     */
+
+    document
+        .getElementById(
+            "detectedBox"
+        )
+        .style.display =
+        "block";
+
+
+    document
+        .getElementById(
+            "detectedNumber"
+        )
+        .textContent =
+        materialNo;
+
+
+    document
+        .getElementById(
+            "scanConfirm"
+        )
+        .textContent =
+        "11자리 번호 확인 중 " +
+        Math.min(
+            candidateCount,
+            REQUIRED_CONFIRMATIONS
+        ) +
+        "/" +
+        REQUIRED_CONFIRMATIONS;
+
+
+    /*
+     * 3회 확인
+     */
+
+    if(
+        candidateCount >=
+        REQUIRED_CONFIRMATIONS
+    ){
+
+        acceptedCode =
+            materialNo;
+
+        acceptedTime =
+            Date.now();
+
+
+        acceptBarcode(
+            materialNo
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   최종 확정
+============================================================ */
+
+function acceptBarcode(materialNo){
+
+    stopScanner();
+
+
+    document
+        .getElementById(
+            "detectedNumber"
+        )
+        .textContent =
+        materialNo;
+
+
+    document
+        .getElementById(
+            "detectedBox"
+        )
+        .style.display =
+        "block";
+
+
+    setStatus(
+        "✅ 11자리 Material No. 인식 완료: " +
+        materialNo,
+        "success"
+    );
+
+
+    /*
+     * 기존 부품 조회
+     */
+
+    lookupPart(
+        materialNo
     );
 
 }
@@ -698,15 +1553,15 @@ function stopScanner(){
         false;
 
 
-    if(currentTrack){
+    try{
 
-        try{
+        if(currentTrack){
 
             currentTrack.stop();
 
-        }catch(e){}
+        }
 
-    }
+    }catch(e){}
 
 
     currentTrack =
@@ -721,16 +1576,189 @@ function stopScanner(){
         "none";
 
 
-    /*
-     * 다음 스캔을 위해 초기화
-     */
-    resetBarcodeCandidate();
+    resetCandidate();
 
 }
 
 
 /* ============================================================
-   수동 조회
+   줌 +
+============================================================ */
+
+async function zoomIn(){
+
+    if(!currentTrack){
+
+        return;
+
+    }
+
+
+    if(
+        maxZoom <= minZoom
+    ){
+
+        setStatus(
+            "이 휴대폰에서는 웹 줌을 지원하지 않습니다.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    currentZoom =
+        Math.min(
+            currentZoom + .5,
+            maxZoom
+        );
+
+
+    await applyZoom();
+
+}
+
+
+/* ============================================================
+   줌 -
+============================================================ */
+
+async function zoomOut(){
+
+    if(!currentTrack){
+
+        return;
+
+    }
+
+
+    if(
+        maxZoom <= minZoom
+    ){
+
+        return;
+
+    }
+
+
+    currentZoom =
+        Math.max(
+            currentZoom - .5,
+            minZoom
+        );
+
+
+    await applyZoom();
+
+}
+
+
+/* ============================================================
+   줌 적용
+============================================================ */
+
+async function applyZoom(){
+
+    if(!currentTrack){
+
+        return;
+
+    }
+
+
+    try{
+
+        await currentTrack
+            .applyConstraints({
+
+                advanced:[
+                    {
+                        zoom:
+                            currentZoom
+                    }
+                ]
+
+            });
+
+    }catch(error){
+
+        console.log(
+            "줌 오류:",
+            error
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   손전등
+============================================================ */
+
+async function toggleTorch(){
+
+    if(!currentTrack){
+
+        return;
+
+    }
+
+
+    try{
+
+        const capabilities =
+            currentTrack.getCapabilities
+                ? currentTrack.getCapabilities()
+                : {};
+
+
+        if(
+            !capabilities.torch
+        ){
+
+            setStatus(
+                "이 휴대폰에서는 웹 조명을 지원하지 않습니다.",
+                "warning"
+            );
+
+            return;
+
+        }
+
+
+        torchOn =
+            !torchOn;
+
+
+        await currentTrack
+            .applyConstraints({
+
+                advanced:[
+                    {
+                        torch:
+                            torchOn
+                    }
+                ]
+
+            });
+
+
+    }catch(error){
+
+        console.log(
+            "조명 오류:",
+            error
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   수동 입력
 ============================================================ */
 
 function manualSearch(){
@@ -746,16 +1774,15 @@ function manualSearch(){
 
 
     const materialNo =
-        getValidMaterialNo(raw);
+        getExact11Digits(
+            raw
+        );
 
 
-    /*
-     * 수동 입력도 11자리만 인정
-     */
     if(!materialNo){
 
         setStatus(
-            "Material No.는 정확히 11자리 숫자로 입력해주세요.",
+            "Material No.는 정확히 11자리 숫자여야 합니다.",
             "error"
         );
 
@@ -774,5 +1801,443 @@ function manualSearch(){
 
 }
 
+
+/* ============================================================
+   부품 조회
+============================================================ */
+
+function lookupPart(partNo){
+
+    partNo =
+        String(partNo || "")
+            .trim();
+
+
+    if(!partNo){
+
+        return;
+
+    }
+
+
+    document
+        .getElementById(
+            "loading"
+        )
+        .style.display =
+        "block";
+
+
+    document
+        .getElementById(
+            "result"
+        )
+        .innerHTML =
+        "";
+
+
+    setStatus(
+        "부품 정보를 조회하고 있습니다...",
+        "warning"
+    );
+
+
+    /*
+     * Google Apps Script 환경
+     */
+
+    if(
+        typeof google !== "undefined" &&
+        google.script &&
+        google.script.run
+    ){
+
+        google.script.run
+
+            .withSuccessHandler(
+                function(data){
+
+                    document
+                        .getElementById(
+                            "loading"
+                        )
+                        .style.display =
+                        "none";
+
+
+                    displayPart(
+                        data
+                    );
+
+                }
+            )
+
+            .withFailureHandler(
+                function(error){
+
+                    document
+                        .getElementById(
+                            "loading"
+                        )
+                        .style.display =
+                        "none";
+
+
+                    setStatus(
+                        "부품 조회 중 오류가 발생했습니다.",
+                        "error"
+                    );
+
+
+                    console.error(
+                        error
+                    );
+
+                }
+            )
+
+            .getPart(
+                partNo
+            );
+
+
+        return;
+
+    }
+
+
+    /*
+     * GitHub Pages
+     *
+     * 실제 API 연결 전에는
+     * 인식된 Material No.만 표시
+     */
+
+    displayPart({
+
+        partNo:partNo
+
+    });
+
+}
+
+
+/* ============================================================
+   결과
+============================================================ */
+
+function displayPart(data){
+
+    if(!data){
+
+        document
+            .getElementById(
+                "loading"
+            )
+            .style.display =
+            "none";
+
+
+        setStatus(
+            "부품을 찾을 수 없습니다.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const partNo =
+        data.partNo ||
+        data.partNumber ||
+        data.materialNo ||
+        data["부품번호"] ||
+        "";
+
+
+    const name =
+        data.name ||
+        data.partName ||
+        data.description ||
+        data["품명"] ||
+        "";
+
+
+    const spec =
+        data.spec ||
+        data.specification ||
+        data["규격"] ||
+        "";
+
+
+    const stock =
+        data.stock ??
+        data.currentStock ??
+        data["현재고"] ??
+        "";
+
+
+    const location =
+        data.location ||
+        data.currentLocation ||
+        data["현재 로케이션"] ||
+        "";
+
+
+    const assignedLocation =
+        data.assignedLocation ||
+        data.designatedLocation ||
+        data["지정 로케이션"] ||
+        "";
+
+
+    document
+        .getElementById(
+            "result"
+        )
+        .innerHTML = `
+
+            <div class="card">
+
+                <div class="result-row">
+
+                    <div class="label">
+                        Material No.
+                    </div>
+
+                    <div class="value">
+                        ${escapeHtml(partNo)}
+                    </div>
+
+                </div>
+
+
+                <div class="result-row">
+
+                    <div class="label">
+                        품명
+                    </div>
+
+                    <div class="value">
+                        ${escapeHtml(name)}
+                    </div>
+
+                </div>
+
+
+                <div class="result-row">
+
+                    <div class="label">
+                        규격
+                    </div>
+
+                    <div class="value">
+                        ${escapeHtml(spec)}
+                    </div>
+
+                </div>
+
+
+                <div class="result-row">
+
+                    <div class="label">
+                        현재고
+                    </div>
+
+                    <div class="value">
+                        ${escapeHtml(stock)}
+                    </div>
+
+                </div>
+
+
+                <div class="result-row">
+
+                    <div class="label">
+                        현재 로케이션
+                    </div>
+
+                    <div class="value">
+                        ${escapeHtml(location)}
+                    </div>
+
+                </div>
+
+
+                <div class="result-row">
+
+                    <div class="label">
+                        지정 로케이션
+                    </div>
+
+                    <div class="value">
+                        ${escapeHtml(
+                            assignedLocation
+                        )}
+                    </div>
+
+                </div>
+
+            </div>
+
+        `;
+
+
+    document
+        .getElementById(
+            "loading"
+        )
+        .style.display =
+        "none";
+
+
+    if(
+        !name &&
+        !spec &&
+        stock === "" &&
+        !location
+    ){
+
+        setStatus(
+            "✅ 11자리 Material No. 인식 완료",
+            "success"
+        );
+
+    }else{
+
+        setStatus(
+            "✅ 부품 조회 완료",
+            "success"
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   HTML escape
+============================================================ */
+
+function escapeHtml(value){
+
+    if(
+        value === null ||
+        value === undefined
+    ){
+
+        return "";
+
+    }
+
+
+    return String(value)
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+/* ============================================================
+   수동 입력창
+============================================================ */
+
+function showManualBox(){
+
+    document
+        .getElementById(
+            "manualBox"
+        )
+        .style.display =
+        "block";
+
+}
+
+
+/* ============================================================
+   엔터
+============================================================ */
+
+document
+    .getElementById(
+        "manualBarcode"
+    )
+    .addEventListener(
+        "keydown",
+        function(event){
+
+            if(
+                event.key === "Enter"
+            ){
+
+                event.preventDefault();
+
+                manualSearch();
+
+            }
+
+        }
+    );
+
+
+/* ============================================================
+   종료
+============================================================ */
+
+window.addEventListener(
+    "beforeunload",
+    function(){
+
+        try{
+
+            if(scannerRunning){
+
+                Quagga.stop();
+
+            }
+
+        }catch(e){}
+
+
+        try{
+
+            if(currentTrack){
+
+                currentTrack.stop();
+
+            }
+
+        }catch(e){}
+
+    }
+);
+
 </script>
+
+</body>
+</html>
 ```
