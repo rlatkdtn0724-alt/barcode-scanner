@@ -1,7 +1,6 @@
 ```html
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
 
 <meta charset="UTF-8">
@@ -14,12 +13,8 @@
 
 <title>부품 재고 조회</title>
 
-<!--
-    ZXing Browser
-    GitHub Pages에서 바로 사용할 수 있는 브라우저용 바코드 라이브러리
--->
-<script src="https://unpkg.com/@zxing/browser@latest"></script>
-
+<!-- Tesseract OCR -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
 
@@ -30,7 +25,7 @@
 
 body{
     margin:0;
-    background:#f5f5f5;
+    background:#f4f4f4;
     color:#111;
     font-family:
         -apple-system,
@@ -44,13 +39,13 @@ body{
     width:100%;
     max-width:760px;
     margin:0 auto;
-    padding:20px 14px 50px;
+    padding:18px 12px 50px;
 }
 
 h1{
     text-align:center;
     font-size:34px;
-    margin:25px 0 30px;
+    margin:22px 0 28px;
     font-weight:800;
 }
 
@@ -67,8 +62,8 @@ button{
     width:100%;
     height:68px;
     background:#222;
-    color:#fff;
-    margin-bottom:18px;
+    color:white;
+    margin-bottom:16px;
 }
 
 .main-button:active{
@@ -77,57 +72,69 @@ button{
 
 
 /* =========================================================
-   스캐너
+   OCR CAMERA
 ========================================================= */
 
-#scannerBox{
+#cameraBox{
     display:none;
     position:relative;
     background:#000;
     border-radius:20px;
     overflow:hidden;
-    margin-bottom:18px;
-}
-
-#scanner{
-    position:relative;
-    width:100%;
-    height:430px;
-    background:#000;
-    overflow:hidden;
+    margin-bottom:16px;
 }
 
 #video{
-    width:100%;
-    height:100%;
-    object-fit:cover;
     display:block;
+    width:100%;
+    height:430px;
+    object-fit:cover;
+    background:#000;
 }
 
 
 /* =========================================================
-   스캔 가이드
+   OCR 가이드
 ========================================================= */
 
-.scan-guide{
+.ocr-guide{
     position:absolute;
+
     left:4%;
     right:4%;
-    top:50%;
-    height:145px;
-    transform:translateY(-50%);
+
+    top:30%;
+    height:115px;
 
     border:3px solid #fff;
-    border-radius:14px;
+    border-radius:12px;
 
     z-index:10;
     pointer-events:none;
 
     box-shadow:
-        0 0 0 9999px rgba(0,0,0,.30);
+        0 0 0 9999px rgba(0,0,0,.42);
 }
 
-.scan-guide:after{
+.ocr-guide::before{
+    content:"Material No. 줄을 이 안에 맞춰주세요";
+
+    position:absolute;
+    left:0;
+    right:0;
+    top:-34px;
+
+    text-align:center;
+
+    color:#fff;
+
+    font-size:14px;
+    font-weight:700;
+
+    text-shadow:0 2px 5px #000;
+}
+
+.ocr-guide::after{
     content:"";
 
     position:absolute;
@@ -137,169 +144,96 @@ button{
 
     top:50%;
 
-    height:3px;
+    height:2px;
 
     background:#ff3b30;
 
     box-shadow:
-        0 0 10px #ff3b30;
-
-    animation:
-        scanline 1.4s infinite;
-}
-
-@keyframes scanline{
-
-    0%{
-        transform:translateY(-50px);
-        opacity:.4;
-    }
-
-    50%{
-        transform:translateY(50px);
-        opacity:1;
-    }
-
-    100%{
-        transform:translateY(-50px);
-        opacity:.4;
-    }
-
+        0 0 8px #ff3b30;
 }
 
 
 /* =========================================================
-   모서리
+   OCR 상태
 ========================================================= */
 
-.corner{
-    position:absolute;
-    width:30px;
-    height:30px;
-    border-color:#fff;
-    border-style:solid;
-}
-
-.corner.tl{
-    top:-3px;
-    left:-3px;
-    border-width:5px 0 0 5px;
-}
-
-.corner.tr{
-    top:-3px;
-    right:-3px;
-    border-width:5px 5px 0 0;
-}
-
-.corner.bl{
-    bottom:-3px;
-    left:-3px;
-    border-width:0 0 5px 5px;
-}
-
-.corner.br{
-    bottom:-3px;
-    right:-3px;
-    border-width:0 5px 5px 0;
-}
-
-
-/* =========================================================
-   안내
-========================================================= */
-
-.scan-top-message{
-    position:absolute;
-    top:15px;
-    left:0;
-    right:0;
-
-    text-align:center;
-
-    color:#fff;
-
-    font-size:15px;
-    font-weight:700;
-
-    z-index:20;
-
-    text-shadow:
-        0 2px 6px #000;
-}
-
-.scan-bottom-message{
-    position:absolute;
-    bottom:16px;
-    left:0;
-    right:0;
-
-    text-align:center;
-
-    color:#fff;
-
-    font-size:14px;
-    font-weight:600;
-
-    z-index:20;
-
-    text-shadow:
-        0 2px 6px #000;
-}
-
-
-/* =========================================================
-   스캔 진행 상태
-========================================================= */
-
-#scanProgress{
+#cameraStatus{
     position:absolute;
 
+    top:16px;
     left:50%;
-    top:75px;
 
     transform:translateX(-50%);
 
-    color:#fff;
+    padding:7px 12px;
 
     background:rgba(0,0,0,.65);
 
-    padding:8px 14px;
-
     border-radius:20px;
 
-    font-size:14px;
+    color:#fff;
 
+    font-size:13px;
     font-weight:700;
 
-    z-index:30;
-
     white-space:nowrap;
+
+    z-index:20;
 }
 
 
 /* =========================================================
-   컨트롤
+   하단 안내
 ========================================================= */
 
-.scanner-controls{
+.camera-help{
+    position:absolute;
+
+    left:0;
+    right:0;
+
+    bottom:16px;
+
+    text-align:center;
+
+    color:#fff;
+
+    font-size:13px;
+    font-weight:600;
+
+    text-shadow:0 2px 5px #000;
+
+    z-index:20;
+}
+
+
+/* =========================================================
+   카메라 버튼
+========================================================= */
+
+.camera-controls{
     display:flex;
     gap:8px;
+
     padding:10px;
+
     background:#111;
 }
 
-.scanner-controls button{
+.camera-controls button{
     flex:1;
+
     height:48px;
+
     background:#333;
-    color:#fff;
+    color:white;
+
     font-size:15px;
 }
 
 .close-button{
     width:100%;
-    height:55px;
+    height:54px;
 
     margin-top:10px;
 
@@ -309,11 +243,13 @@ button{
 
 
 /* =========================================================
-   원본값 확인
+   OCR 원본
 ========================================================= */
 
-.debug-box{
+#ocrBox{
     display:none;
+
+    margin-top:12px;
 
     background:#fff7ed;
 
@@ -322,59 +258,59 @@ button{
     border-radius:14px;
 
     padding:14px;
-
-    margin-top:12px;
-
-    word-break:break-all;
 }
 
-.debug-title{
+.ocr-title{
     color:#9a3412;
+
     font-size:13px;
+
     font-weight:700;
+
     margin-bottom:7px;
 }
 
-.debug-value{
-    font-size:18px;
-    font-weight:800;
-}
+.ocr-text{
+    color:#111;
 
-.debug-clean{
-    margin-top:6px;
-    color:#666;
-    font-size:14px;
+    font-size:15px;
+
+    line-height:1.6;
+
+    white-space:pre-wrap;
+
+    word-break:break-word;
 }
 
 
 /* =========================================================
-   확정된 Material No.
+   후보 번호
 ========================================================= */
 
-.detected-box{
+#candidateBox{
     display:none;
+
+    margin-top:12px;
 
     background:#fff;
 
     border-radius:14px;
 
-    padding:18px;
-
-    margin-top:12px;
+    padding:16px;
 
     text-align:center;
 
     box-shadow:
-        0 2px 10px rgba(0,0,0,.07);
+        0 2px 10px rgba(0,0,0,.06);
 }
 
-.detected-label{
+.candidate-label{
     color:#777;
     font-size:13px;
     margin-bottom:6px;
 }
 
-.detected-number{
+#candidateNumber{
     font-size:28px;
     font-weight:800;
     letter-spacing:1px;
@@ -386,13 +322,15 @@ button{
 ========================================================= */
 
 .status{
-    text-align:center;
-
     min-height:24px;
 
     margin:12px 0;
 
+    text-align:center;
+
     font-size:16px;
+
+    color:#666;
 }
 
 .success{
@@ -412,22 +350,38 @@ button{
 
 
 /* =========================================================
-   수동
+   로딩
+========================================================= */
+
+#loading{
+    display:none;
+
+    padding:28px 10px;
+
+    text-align:center;
+
+    font-size:16px;
+}
+
+
+/* =========================================================
+   수동 입력
 ========================================================= */
 
 .manual{
     display:none;
-    margin-top:18px;
+
+    margin-top:16px;
 }
 
-input{
+.manual input{
     width:100%;
     height:55px;
 
+    padding:0 15px;
+
     border:1px solid #ccc;
     border-radius:12px;
-
-    padding:0 15px;
 
     font-size:18px;
 
@@ -442,18 +396,6 @@ input{
 
     background:#222;
     color:#fff;
-}
-
-
-/* =========================================================
-   로딩
-========================================================= */
-
-.loading{
-    display:none;
-    text-align:center;
-    padding:30px 10px;
-    font-size:17px;
 }
 
 
@@ -476,6 +418,7 @@ input{
 
 .result-row{
     padding:14px 0;
+
     border-bottom:1px solid #eee;
 }
 
@@ -496,31 +439,34 @@ input{
 }
 
 
+/* =========================================================
+   모바일
+========================================================= */
+
 @media(max-width:600px){
 
     .container{
-        padding:15px 12px 40px;
+        padding:15px 10px 40px;
     }
 
     h1{
-        font-size:32px;
-        margin:22px 0 30px;
+        font-size:31px;
+        margin:20px 0 27px;
     }
 
-    #scanner{
+    #video{
         height:430px;
     }
 
-    .scan-guide{
-        left:4%;
-        right:4%;
-        height:135px;
+    .ocr-guide{
+        left:3%;
+        right:3%;
+        height:110px;
     }
 
 }
 
 </style>
-
 </head>
 
 
@@ -528,206 +474,167 @@ input{
 
 <div class="container">
 
-
-<h1>부품 재고 조회</h1>
-
-
-<!-- =====================================================
-     스캔 시작
-===================================================== -->
-
-<button
-    id="scanButton"
-    class="main-button"
-    onclick="startScanner()">
-
-    📷 바코드 스캔
-
-</button>
+    <h1>부품 재고 조회</h1>
 
 
-<!-- =====================================================
-     스캐너
-===================================================== -->
+    <!-- =====================================================
+         스캔 시작
+    ====================================================== -->
 
-<div id="scannerBox">
+    <button
+        id="scanButton"
+        class="main-button"
+        onclick="startOCR()">
+
+        📷 Material No. 스캔
+
+    </button>
 
 
-    <div id="scanner">
+    <!-- =====================================================
+         카메라
+    ====================================================== -->
+
+    <div id="cameraBox">
 
 
         <video
             id="video"
-            muted
             autoplay
+            muted
             playsinline>
         </video>
 
 
-        <div class="scan-top-message">
+        <div
+            id="cameraStatus">
 
-            Material No. 바코드를
-            사각형 안에 맞춰주세요
+            카메라 준비 중...
 
         </div>
 
+
+        <div class="ocr-guide"></div>
+
+
+        <div class="camera-help">
+
+            Material No. 숫자 줄만
+            사각형 안에 크게 맞춰주세요
+
+        </div>
+
+
+        <div class="camera-controls">
+
+            <button onclick="zoomOut()">
+                − 줌
+            </button>
+
+            <button onclick="toggleTorch()">
+                🔦 조명
+            </button>
+
+            <button onclick="zoomIn()">
+                ＋ 줌
+            </button>
+
+        </div>
+
+
+        <button
+            class="close-button"
+            onclick="stopOCR()">
+
+            스캔 종료
+
+        </button>
+
+    </div>
+
+
+    <!-- =====================================================
+         상태
+    ====================================================== -->
+
+    <div
+        id="status"
+        class="status">
+    </div>
+
+
+    <!-- =====================================================
+         OCR 원본
+    ====================================================== -->
+
+    <div id="ocrBox">
+
+        <div class="ocr-title">
+            OCR 읽은 내용
+        </div>
 
         <div
-            id="scanProgress">
-
-            바코드를 찾는 중...
-
+            id="ocrText"
+            class="ocr-text">
         </div>
 
-
-        <div class="scan-guide">
-
-
-            <div class="corner tl"></div>
-            <div class="corner tr"></div>
-            <div class="corner bl"></div>
-            <div class="corner br"></div>
+    </div>
 
 
+    <!-- =====================================================
+         후보
+    ====================================================== -->
+
+    <div id="candidateBox">
+
+        <div class="candidate-label">
+            Material No. 후보
         </div>
 
-
-        <div class="scan-bottom-message">
-
-            바코드를 너무 멀리 두지 마세요
-
+        <div id="candidateNumber">
         </div>
 
-
     </div>
 
 
-    <div class="scanner-controls">
-
-        <button onclick="zoomOut()">
-            − 줌
-        </button>
-
-        <button onclick="toggleTorch()">
-            🔦 조명
-        </button>
-
-        <button onclick="zoomIn()">
-            ＋ 줌
-        </button>
-
-    </div>
-
-
-    <button
-        class="close-button"
-        onclick="stopScanner()">
-
-        스캔 종료
-
-    </button>
-
-
-</div>
-
-
-<!-- =====================================================
-     상태
-===================================================== -->
-
-<div
-    id="status"
-    class="status">
-</div>
-
-
-<!-- =====================================================
-     원본 인식값
-===================================================== -->
-
-<div
-    id="debugBox"
-    class="debug-box">
-
-    <div class="debug-title">
-        바코드 원본 인식값
-    </div>
+    <!-- =====================================================
+         수동
+    ====================================================== -->
 
     <div
-        id="debugValue"
-        class="debug-value">
-    </div>
+        id="manualBox"
+        class="manual">
 
-    <div
-        id="debugClean"
-        class="debug-clean">
-    </div>
+        <input
+            id="manualBarcode"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            placeholder="Material No. 입력">
 
-</div>
-
-
-<!-- =====================================================
-     최종 11자리
-===================================================== -->
-
-<div
-    id="detectedBox"
-    class="detected-box">
-
-    <div class="detected-label">
-
-        최종 인식된 Material No.
+        <button onclick="manualSearch()">
+            부품 조회
+        </button>
 
     </div>
 
-    <div
-        id="detectedNumber"
-        class="detected-number">
+
+    <!-- =====================================================
+         로딩
+    ====================================================== -->
+
+    <div id="loading">
+
+        🔍 Material No.를 확인하는 중...
+
     </div>
 
-</div>
 
+    <!-- =====================================================
+         결과
+    ====================================================== -->
 
-<!-- =====================================================
-     수동 입력
-===================================================== -->
-
-<div
-    id="manualBox"
-    class="manual">
-
-    <input
-        id="manualBarcode"
-        type="text"
-        inputmode="numeric"
-        autocomplete="off"
-        placeholder="Material No. 직접 입력">
-
-    <button onclick="manualSearch()">
-        부품 조회
-    </button>
-
-</div>
-
-
-<!-- =====================================================
-     로딩
-===================================================== -->
-
-<div
-    id="loading"
-    class="loading">
-
-    🔍 부품 정보를 조회하고 있습니다...
-
-</div>
-
-
-<!-- =====================================================
-     결과
-===================================================== -->
-
-<div id="result"></div>
+    <div id="result"></div>
 
 
 </div>
@@ -735,47 +642,58 @@ input{
 
 <script>
 
-
 /* =========================================================
    설정
 ========================================================= */
 
 
 /*
- * Material No.는 정확히 11자리
+ * Material No. 자리수
  */
 const MATERIAL_LENGTH = 11;
 
 
 /*
- * 같은 값이 여러 번 확인되어야 확정
+ * OCR 연속 확인 횟수
  *
- * 잘못 읽은 값이 한 번 튀는 것을 방지
+ * 한 번 잘못 인식된 값을 바로 확정하지 않는다.
  */
-const CONFIRM_COUNT = 3;
+const REQUIRED_CONFIRMATIONS = 2;
 
 
 /*
- * 같은 번호가 연속으로 확인되어야 하는 시간
+ * OCR 반복 간격
+ *
+ * 너무 자주 OCR을 돌리면 휴대폰이 느려지므로
+ * 1.2초 정도 간격으로 실행
  */
-const CONFIRM_WINDOW = 2200;
+const OCR_INTERVAL = 1200;
+
+
+/*
+ * 이미 읽은 번호 재처리 방지
+ */
+const ACCEPT_BLOCK_TIME = 4000;
 
 
 /* =========================================================
-   ZXing
+   상태 변수
 ========================================================= */
 
-let codeReader = null;
+let stream = null;
 
-let controls = null;
+let video = null;
 
-let scannerRunning = false;
+let scanning = false;
+
+let processingOCR = false;
+
+let ocrTimer = null;
 
 
-/* =========================================================
-   카메라
-========================================================= */
-
+/*
+ * 카메라
+ */
 let currentTrack = null;
 
 let currentZoom = 1;
@@ -787,24 +705,30 @@ let maxZoom = 1;
 let torchOn = false;
 
 
-/* =========================================================
-   후보
-========================================================= */
-
-let candidateCode = "";
+/*
+ * OCR 후보
+ */
+let candidate = "";
 
 let candidateCount = 0;
 
-let candidateStartTime = 0;
+let candidateStart = 0;
 
 
-/* =========================================================
-   마지막 확정
-========================================================= */
-
-let lastAcceptedCode = "";
+/*
+ * 최종 확정
+ */
+let lastAccepted = "";
 
 let lastAcceptedTime = 0;
+
+
+/*
+ * Tesseract Worker
+ */
+let worker = null;
+
+let workerReady = false;
 
 
 /* =========================================================
@@ -812,7 +736,7 @@ let lastAcceptedTime = 0;
 ========================================================= */
 
 function setStatus(
-    message,
+    text,
     type = ""
 ){
 
@@ -822,195 +746,670 @@ function setStatus(
         );
 
     el.textContent =
-        message;
+        text;
 
     el.className =
         "status";
 
+
     if(type){
 
-        el.classList.add(type);
-
-    }
-
-}
-
-
-/* =========================================================
-   원본 표시
-========================================================= */
-
-function showDebugValue(
-    raw,
-    cleaned
-){
-
-    const box =
-        document.getElementById(
-            "debugBox"
+        el.classList.add(
+            type
         );
 
-    box.style.display =
-        "block";
-
-
-    document
-        .getElementById(
-            "debugValue"
-        )
-        .textContent =
-        raw;
-
-
-    document
-        .getElementById(
-            "debugClean"
-        )
-        .textContent =
-        "숫자만 정리: " +
-        cleaned;
+    }
 
 }
 
 
 /* =========================================================
-   Material No. 검사
-========================================================= */
-
-function getExactMaterialNo(
-    raw
-){
-
-    if(
-        raw === null ||
-        raw === undefined
-    ){
-
-        return null;
-
-    }
-
-
-    let text =
-        String(raw)
-            .trim();
-
-
-    if(!text){
-
-        return null;
-
-    }
-
-
-    /*
-     * 바코드가 숫자 사이에
-     * 공백 / 하이픈을 넣어 반환하는 경우 허용
-     *
-     * 예:
-     * 07 11 9 905 147
-     *
-     * →
-     * 07119905147
-     */
-
-    const cleaned =
-        text.replace(
-            /[\s-]/g,
-            ""
-        );
-
-
-    /*
-     * ★ 여기서 매우 중요
-     *
-     * 숫자 이외의 문자가 있으면 실패
-     *
-     * ABC07119905147
-     * → 실패
-     *
-     * 07119905147XYZ
-     * → 실패
-     */
-
-    if(
-        !/^\d+$/.test(
-            cleaned
-        )
-    ){
-
-        return null;
-
-    }
-
-
-    /*
-     * ★ 정확히 11자리
-     *
-     * 6자리 243183
-     * → 실패
-     *
-     * 10자리
-     * → 실패
-     *
-     * 12자리
-     * → 실패
-     */
-
-    if(
-        cleaned.length !==
-        MATERIAL_LENGTH
-    ){
-
-        return null;
-
-    }
-
-
-    return cleaned;
-
-}
-
-
-/* =========================================================
-   후보 초기화
+   스캔 후보 초기화
 ========================================================= */
 
 function resetCandidate(){
 
-    candidateCode =
-        "";
+    candidate = "";
 
-    candidateCount =
-        0;
+    candidateCount = 0;
 
-    candidateStartTime =
-        0;
+    candidateStart = 0;
 
 }
 
 
 /* =========================================================
-   스캐너 시작
+   숫자 정리
 ========================================================= */
 
-async function startScanner(){
+function normalizeDigits(text){
 
-    if(scannerRunning){
+    if(
+        text === null ||
+        text === undefined
+    ){
+
+        return "";
+
+    }
+
+
+    /*
+     * OCR에서 자주 틀리는 문자들을
+     * 숫자로 보정
+     *
+     * O → 0
+     * I/l → 1
+     * S → 5
+     * B → 8
+     * Z → 2
+     */
+    let value =
+        String(text)
+
+            .replace(
+                /O/gi,
+                "0"
+            )
+
+            .replace(
+                /I/gi,
+                "1"
+            )
+
+            .replace(
+                /L/gi,
+                "1"
+            )
+
+            .replace(
+                /S/gi,
+                "5"
+            )
+
+            .replace(
+                /B/gi,
+                "8"
+            )
+
+            .replace(
+                /Z/gi,
+                "2"
+            );
+
+
+    /*
+     * 공백 / 하이픈 등을 제거
+     */
+    value =
+        value.replace(
+            /[^0-9]/g,
+            ""
+        );
+
+
+    return value;
+
+}
+
+
+/* =========================================================
+   Material No. 후보 생성
+========================================================= */
+
+function extractMaterialCandidates(
+    text
+){
+
+    const candidates = [];
+
+
+    if(!text){
+
+        return candidates;
+
+    }
+
+
+    /*
+     * 줄 단위로 나누기
+     */
+    const lines =
+        String(text)
+            .split(/\r?\n/)
+            .map(
+                line =>
+                    line.trim()
+            )
+            .filter(
+                line => line.length > 0
+            );
+
+
+    /*
+     * -----------------------------------------------------
+     * 1차:
+     * Material / Material No. 줄을 최우선 분석
+     * -----------------------------------------------------
+     */
+
+    for(
+        const line of lines
+    ){
+
+        const lower =
+            line.toLowerCase();
+
+
+        const hasMaterial =
+            lower.includes(
+                "material"
+            ) ||
+            lower.includes(
+                "mat"
+            );
+
+
+        if(!hasMaterial){
+
+            continue;
+
+        }
+
+
+        const normalized =
+            normalizeDigits(line);
+
+
+        /*
+         * 정확히 11자리
+         */
+
+        if(
+            normalized.length ===
+            MATERIAL_LENGTH
+        ){
+
+            candidates.push(
+                normalized
+            );
+
+        }
+
+
+        /*
+         * 줄 안에 공백으로 분리된 숫자들이 있는 경우
+         *
+         * 예:
+         *
+         * 07 11 9 905 147
+         */
+
+        const groups =
+            line.match(
+                /\d+/g
+            );
+
+
+        if(groups){
+
+            const grouped =
+                groups.join("");
+
+
+            if(
+                grouped.length ===
+                MATERIAL_LENGTH
+            ){
+
+                candidates.push(
+                    grouped
+                );
+
+            }
+
+        }
+
+    }
+
+
+    /*
+     * -----------------------------------------------------
+     * 2차:
+     * OCR 전체 텍스트에서
+     * 11자리 숫자가 있는 줄만 확인
+     *
+     * ★ 여기서는 숫자를 잘라내지 않는다.
+     * 정확히 11자리인 경우만 인정한다.
+     * -----------------------------------------------------
+     */
+
+    for(
+        const line of lines
+    ){
+
+        const digits =
+            normalizeDigits(line);
+
+
+        if(
+            digits.length ===
+            MATERIAL_LENGTH
+        ){
+
+            candidates.push(
+                digits
+            );
+
+        }
+
+    }
+
+
+    /*
+     * -----------------------------------------------------
+     * 3차:
+     * 그룹 숫자 합치기
+     *
+     * 예:
+     * 07 11 9 905 147
+     *
+     * → 07119905147
+     *
+     * 단, 한 줄에서만 처리
+     * -----------------------------------------------------
+     */
+
+    for(
+        const line of lines
+    ){
+
+        const groups =
+            line.match(
+                /\d+/g
+            );
+
+
+        if(
+            !groups ||
+            groups.length < 2
+        ){
+
+            continue;
+
+        }
+
+
+        /*
+         * 너무 긴 숫자를 억지로 자르지 않는다.
+         */
+
+        const joined =
+            groups.join("");
+
+
+        if(
+            joined.length ===
+            MATERIAL_LENGTH
+        ){
+
+            candidates.push(
+                joined
+            );
+
+        }
+
+    }
+
+
+    /*
+     * 중복 제거
+     */
+
+    return [
+        ...new Set(
+            candidates
+        )
+    ];
+
+}
+
+
+/* =========================================================
+   OCR 전처리
+========================================================= */
+
+
+/*
+ * 카메라 전체 화면에서
+ * Material No. 가 있을 것으로 예상되는
+ * 중앙 영역만 잘라낸다.
+ *
+ * 이게 Quantity / Location을
+ * 제외하는 핵심이다.
+ */
+
+function captureOCRCanvas(){
+
+    if(
+        !video ||
+        video.readyState < 2
+    ){
+
+        return null;
+
+    }
+
+
+    const videoWidth =
+        video.videoWidth;
+
+    const videoHeight =
+        video.videoHeight;
+
+
+    if(
+        !videoWidth ||
+        !videoHeight
+    ){
+
+        return null;
+
+    }
+
+
+    /*
+     * 화면 가이드와 비슷한 중앙 영역
+     */
+
+    const cropX =
+        Math.round(
+            videoWidth * 0.04
+        );
+
+
+    const cropWidth =
+        Math.round(
+            videoWidth * 0.92
+        );
+
+
+    /*
+     * Material No. 줄을
+     * 화면 중앙 위쪽 정도에서 가져온다.
+     *
+     * 너무 넓게 잡으면
+     * Quantity / Location이 같이 들어올 수 있다.
+     */
+
+    const cropY =
+        Math.round(
+            videoHeight * 0.28
+        );
+
+
+    const cropHeight =
+        Math.round(
+            videoHeight * 0.24
+        );
+
+
+    /*
+     * 2배 확대해서 OCR
+     */
+
+    const scale = 2.5;
+
+
+    const canvas =
+        document.createElement(
+            "canvas"
+        );
+
+
+    canvas.width =
+        Math.round(
+            cropWidth * scale
+        );
+
+
+    canvas.height =
+        Math.round(
+            cropHeight * scale
+        );
+
+
+    const ctx =
+        canvas.getContext(
+            "2d",
+            {
+                willReadFrequently:true
+            }
+        );
+
+
+    /*
+     * 흑백 변환을 위한 원본
+     */
+
+    ctx.drawImage(
+        video,
+
+        cropX,
+        cropY,
+        cropWidth,
+        cropHeight,
+
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    /*
+     * 이미지 대비 증가
+     */
+
+    const imageData =
+        ctx.getImageData(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+
+    const data =
+        imageData.data;
+
+
+    for(
+        let i = 0;
+        i < data.length;
+        i += 4
+    ){
+
+        const r = data[i];
+
+        const g = data[i + 1];
+
+        const b = data[i + 2];
+
+
+        /*
+         * 회색 변환
+         */
+        let gray =
+            0.299 * r +
+            0.587 * g +
+            0.114 * b;
+
+
+        /*
+         * 대비 강화
+         */
+        gray =
+            (gray - 128) * 1.7 + 128;
+
+
+        gray =
+            Math.max(
+                0,
+                Math.min(
+                    255,
+                    gray
+                )
+            );
+
+
+        data[i] =
+            gray;
+
+        data[i + 1] =
+            gray;
+
+        data[i + 2] =
+            gray;
+
+    }
+
+
+    ctx.putImageData(
+        imageData,
+        0,
+        0
+    );
+
+
+    return canvas;
+
+}
+
+
+/* =========================================================
+   Tesseract 준비
+========================================================= */
+
+async function prepareOCR(){
+
+    if(workerReady){
 
         return;
 
     }
 
 
-    /*
-     * 상태 초기화
-     */
+    setStatus(
+        "OCR 엔진을 준비하고 있습니다...",
+        "warning"
+    );
+
+
+    try{
+
+        /*
+         * Tesseract Worker 생성
+         */
+        worker =
+            await Tesseract.createWorker(
+                "eng",
+                1,
+                {
+                    logger:
+                        function(message){
+
+                            if(
+                                message &&
+                                message.status
+                            ){
+
+                                const progress =
+                                    message.progress
+                                        ? Math.round(
+                                            message.progress * 100
+                                          )
+                                        : 0;
+
+
+                                if(
+                                    message.status
+                                    ===
+                                    "recognizing text"
+                                ){
+
+                                    document
+                                        .getElementById(
+                                            "cameraStatus"
+                                        )
+                                        .textContent =
+                                        "문자 인식 중 " +
+                                        progress +
+                                        "%";
+
+                                }
+
+                            }
+
+                        }
+                }
+            );
+
+
+        /*
+         * 숫자 인식에 유리하도록
+         * 페이지 분할 모드 설정
+         */
+        await worker.setParameters({
+
+            tessedit_pageseg_mode:
+                "6",
+
+            preserve_interword_spaces:
+                "1"
+
+        });
+
+
+        workerReady =
+            true;
+
+
+    }catch(error){
+
+        console.error(
+            "OCR Worker error:",
+            error
+        );
+
+
+        workerReady =
+            false;
+
+        throw error;
+
+    }
+
+}
+
+
+/* =========================================================
+   OCR 시작
+========================================================= */
+
+async function startOCR(){
+
+    if(scanning){
+
+        return;
+
+    }
+
 
     resetCandidate();
 
 
-    lastAcceptedCode =
+    lastAccepted =
         "";
 
     lastAcceptedTime =
@@ -1019,7 +1418,7 @@ async function startScanner(){
 
     document
         .getElementById(
-            "scannerBox"
+            "cameraBox"
         )
         .style.display =
         "block";
@@ -1043,7 +1442,7 @@ async function startScanner(){
 
     document
         .getElementById(
-            "debugBox"
+            "ocrBox"
         )
         .style.display =
         "none";
@@ -1051,7 +1450,7 @@ async function startScanner(){
 
     document
         .getElementById(
-            "detectedBox"
+            "candidateBox"
         )
         .style.display =
         "none";
@@ -1063,185 +1462,101 @@ async function startScanner(){
     );
 
 
-    /*
-     * ZXing 존재 확인
-     */
-
-    if(
-        typeof ZXingBrowser ===
-        "undefined"
-    ){
-
-        setStatus(
-            "바코드 엔진을 불러오지 못했습니다.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
     try{
 
         /*
-         * MultiFormatReader
-         *
-         * 1D 바코드 형식들을 자동으로 판독
-         */
-        codeReader =
-            new ZXingBrowser.BrowserMultiFormatReader();
-
-
-        /*
-         * 카메라 목록
+         * 카메라
          */
 
-        const devices =
-            await ZXingBrowser
-                .BrowserCodeReader
-                .listVideoInputDevices();
+        stream =
+            await navigator.mediaDevices
+                .getUserMedia({
+
+                    video:{
+
+                        facingMode:{
+                            ideal:"environment"
+                        },
+
+                        width:{
+                            ideal:1920
+                        },
+
+                        height:{
+                            ideal:1080
+                        }
+
+                    },
+
+                    audio:false
+
+                });
 
 
-        if(
-            !devices ||
-            !devices.length
-        ){
-
-            throw new Error(
-                "카메라를 찾을 수 없습니다."
-            );
-
-        }
-
-
-        /*
-         * 후면 카메라 우선
-         *
-         * 휴대폰에서는 보통 label에
-         * Back / Rear / Environment가 들어간다.
-         */
-
-        let selectedDevice =
-            devices.find(
-                device => {
-
-                    const label =
-                        String(
-                            device.label ||
-                            ""
-                        ).toLowerCase();
-
-                    return (
-                        label.includes("back") ||
-                        label.includes("rear") ||
-                        label.includes("environment") ||
-                        label.includes("후면")
-                    );
-
-                }
-            );
-
-
-        /*
-         * 후면 카메라를 못 찾으면
-         * 마지막 카메라 사용
-         */
-
-        if(!selectedDevice){
-
-            selectedDevice =
-                devices[devices.length - 1];
-
-        }
-
-
-        /*
-         * 비디오
-         */
-
-        const video =
+        video =
             document.getElementById(
                 "video"
             );
 
 
+        video.srcObject =
+            stream;
+
+
+        await video.play();
+
+
+        currentTrack =
+            stream.getVideoTracks()[0];
+
+
+        setupCamera();
+
+
         /*
-         * 연속 디코딩
+         * OCR 엔진 준비
          */
 
-        controls =
-            await codeReader
-                .decodeFromVideoDevice(
-
-                    selectedDevice.deviceId,
-
-                    video,
-
-                    function(
-                        result,
-                        error,
-                        controlsFromZXing
-                    ){
-
-                        /*
-                         * 정상 결과가 있을 때만 처리
-                         */
-                        if(result){
-
-                            processZXingResult(
-                                result
-                            );
-
-                        }
-
-                    }
-
-                );
+        await prepareOCR();
 
 
-        scannerRunning =
+        scanning =
             true;
-
-
-        /*
-         * 카메라 트랙 확인
-         */
-
-        setTimeout(
-            setupCameraTrack,
-            600
-        );
-
-
-        setStatus(
-            "바코드를 사각형 안에 크게 맞춰주세요.",
-            "warning"
-        );
 
 
         document
             .getElementById(
-                "scanProgress"
+                "cameraStatus"
             )
             .textContent =
-            "바코드를 찾는 중...";
+            "Material No. 줄을 찾는 중...";
+
+
+        setStatus(
+            "Material No. 줄을 사각형 안에 맞춰주세요.",
+            "warning"
+        );
+
+
+        /*
+         * OCR 반복 시작
+         */
+
+        scheduleOCR();
 
 
     }catch(error){
 
         console.error(
-            "ZXing scanner error:",
             error
         );
 
 
-        scannerRunning =
-            false;
+        stopOCR();
 
 
         setStatus(
-            "카메라를 시작하지 못했습니다. 카메라 권한을 확인해주세요.",
+            "카메라 또는 OCR을 시작하지 못했습니다.",
             "error"
         );
 
@@ -1259,161 +1574,264 @@ async function startScanner(){
 
 
 /* =========================================================
-   ZXing 결과 처리
+   OCR 반복 예약
 ========================================================= */
 
-function processZXingResult(
-    result
-){
+function scheduleOCR(){
 
-    if(!scannerRunning){
+    if(!scanning){
 
         return;
 
     }
 
 
-    if(!result){
+    clearTimeout(
+        ocrTimer
+    );
+
+
+    ocrTimer =
+        setTimeout(
+            runOCR,
+            OCR_INTERVAL
+        );
+
+}
+
+
+/* =========================================================
+   OCR 실행
+========================================================= */
+
+async function runOCR(){
+
+    if(
+        !scanning ||
+        processingOCR ||
+        !workerReady
+    ){
+
+        scheduleOCR();
 
         return;
 
     }
 
 
-    let raw = "";
+    processingOCR =
+        true;
 
 
     try{
 
-        raw =
-            result.getText();
-
-    }catch(e){
-
-        raw =
-            result.text || "";
-
-    }
+        document
+            .getElementById(
+                "cameraStatus"
+            )
+            .textContent =
+            "Material No. 인식 중...";
 
 
-    if(!raw){
-
-        return;
-
-    }
-
-
-    /*
-     * 디버깅
-     */
-
-    console.log(
-        "ZXing RAW:",
-        raw
-    );
+        /*
+         * OCR용 이미지
+         */
+        const canvas =
+            captureOCRCanvas();
 
 
-    console.log(
-        "ZXing FORMAT:",
-        result.getBarcodeFormat
-            ? result.getBarcodeFormat()
-            : "unknown"
-    );
+        if(!canvas){
+
+            processingOCR =
+                false;
+
+            scheduleOCR();
+
+            return;
+
+        }
 
 
-    /*
-     * 숫자만 확인용
-     */
-    const cleaned =
-        String(raw)
-            .replace(
-                /[\s-]/g,
-                ""
+        /*
+         * OCR
+         */
+        const result =
+            await worker.recognize(
+                canvas
             );
 
 
-    showDebugValue(
-        raw,
-        cleaned
-    );
+        const text =
+            result &&
+            result.data
+                ? result.data.text
+                : "";
 
 
-    /*
-     * ★ 정확히 11자리
-     */
-    const materialNo =
-        getExactMaterialNo(
-            raw
+        /*
+         * OCR 결과 화면 표시
+         */
+
+        showOCRText(
+            text
         );
 
 
-    /*
-     * 11자리 아니면 무시
-     *
-     * 예:
-     * 243183
-     * → 무시
-     */
+        /*
+         * 후보 추출
+         */
 
-    if(!materialNo){
+        const candidates =
+            extractMaterialCandidates(
+                text
+            );
 
-        document
-            .getElementById(
-                "scanProgress"
-            )
-            .textContent =
-            "바코드는 읽었지만 11자리 Material No.가 아닙니다.";
 
-        return;
+        /*
+         * 후보 처리
+         */
+
+        if(
+            candidates.length
+        ){
+
+            processCandidate(
+                candidates
+            );
+
+        }else{
+
+            document
+                .getElementById(
+                    "cameraStatus"
+                )
+                .textContent =
+                "Material No.를 찾는 중...";
+
+        }
+
+
+    }catch(error){
+
+        console.error(
+            "OCR error:",
+            error
+        );
 
     }
 
 
-    /*
-     * 현재 시각
-     */
+    processingOCR =
+        false;
+
+
+    scheduleOCR();
+
+}
+
+
+/* =========================================================
+   OCR 텍스트 표시
+========================================================= */
+
+function showOCRText(text){
+
+    const box =
+        document.getElementById(
+            "ocrBox"
+        );
+
+
+    box.style.display =
+        "block";
+
+
+    document
+        .getElementById(
+            "ocrText"
+        )
+        .textContent =
+        text ||
+        "(인식된 문자가 없습니다)";
+
+}
+
+
+/* =========================================================
+   후보 처리
+========================================================= */
+
+function processCandidate(
+    candidates
+){
 
     const now =
         Date.now();
 
 
     /*
-     * 같은 값이 일정 시간 동안
-     * 반복적으로 확인되는지 검사
+     * 첫 번째 후보
+     *
+     * Material No. 줄을 우선순위로 가져왔음
+     */
+
+    const value =
+        candidates[0];
+
+
+    if(!value){
+
+        return;
+
+    }
+
+
+    /*
+     * 혹시 잘못된 후보 방지
+     */
+    if(
+        !/^\d{11}$/.test(
+            value
+        )
+    ){
+
+        return;
+
+    }
+
+
+    /*
+     * 이전 후보와 동일
      */
 
     if(
-        materialNo ===
-        candidateCode &&
-
-        now -
-        candidateStartTime <=
-        CONFIRM_WINDOW
+        value === candidate &&
+        now - candidateStart < 3000
     ){
 
         candidateCount++;
 
     }else{
 
-        candidateCode =
-            materialNo;
+        candidate =
+            value;
 
         candidateCount =
             1;
 
-        candidateStartTime =
+        candidateStart =
             now;
 
     }
 
 
     /*
-     * 진행 표시
+     * 표시
      */
 
     document
         .getElementById(
-            "detectedBox"
+            "candidateBox"
         )
         .style.display =
         "block";
@@ -1421,50 +1839,47 @@ function processZXingResult(
 
     document
         .getElementById(
-            "detectedNumber"
+            "candidateNumber"
         )
         .textContent =
-        materialNo;
+        value;
 
 
     document
         .getElementById(
-            "scanProgress"
+            "cameraStatus"
         )
         .textContent =
 
-            "11자리 확인 " +
+        "11자리 확인 " +
 
-            Math.min(
-                candidateCount,
-                CONFIRM_COUNT
-            ) +
+        Math.min(
+            candidateCount,
+            REQUIRED_CONFIRMATIONS
+        ) +
 
-            "/" +
+        "/" +
 
-            CONFIRM_COUNT;
+        REQUIRED_CONFIRMATIONS;
 
 
     /*
-     * 최종 확정
+     * 2회 연속 동일하면 확정
      */
 
     if(
         candidateCount >=
-        CONFIRM_COUNT
+        REQUIRED_CONFIRMATIONS
     ){
 
         /*
-         * 중복 확정 방지
+         * 중복 방지
          */
 
         if(
-            materialNo ===
-            lastAcceptedCode &&
-
-            now -
-            lastAcceptedTime <
-            3000
+            value === lastAccepted &&
+            now - lastAcceptedTime <
+            ACCEPT_BLOCK_TIME
         ){
 
             return;
@@ -1472,15 +1887,15 @@ function processZXingResult(
         }
 
 
-        lastAcceptedCode =
-            materialNo;
+        lastAccepted =
+            value;
 
         lastAcceptedTime =
             now;
 
 
         acceptMaterialNo(
-            materialNo
+            value
         );
 
     }
@@ -1496,31 +1911,23 @@ function acceptMaterialNo(
     materialNo
 ){
 
-    /*
-     * 카메라 종료
-     */
-
-    stopScanner();
-
-
-    /*
-     * 최종 번호 표시
-     */
-
-    document
-        .getElementById(
-            "detectedNumber"
-        )
-        .textContent =
-        materialNo;
+    stopOCR();
 
 
     document
         .getElementById(
-            "detectedBox"
+            "candidateBox"
         )
         .style.display =
         "block";
+
+
+    document
+        .getElementById(
+            "candidateNumber"
+        )
+        .textContent =
+        materialNo;
 
 
     setStatus(
@@ -1531,9 +1938,8 @@ function acceptMaterialNo(
 
 
     /*
-     * 실제 부품 조회
+     * 실제 데이터 조회
      */
-
     lookupPart(
         materialNo
     );
@@ -1542,69 +1948,10 @@ function acceptMaterialNo(
 
 
 /* =========================================================
-   카메라 트랙
+   카메라 설정
 ========================================================= */
 
-function setupCameraTrack(){
-
-    try{
-
-        const video =
-            document.getElementById(
-                "video"
-            );
-
-
-        if(
-            !video ||
-            !video.srcObject
-        ){
-
-            return;
-
-        }
-
-
-        const tracks =
-            video
-                .srcObject
-                .getVideoTracks();
-
-
-        if(
-            !tracks ||
-            !tracks.length
-        ){
-
-            return;
-
-        }
-
-
-        currentTrack =
-            tracks[0];
-
-
-        setupCameraCapabilities();
-
-
-    }catch(error){
-
-        console.log(
-            "Track error:",
-            error
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   카메라 기능
-========================================================= */
-
-function setupCameraCapabilities(){
+function setupCamera(){
 
     if(!currentTrack){
 
@@ -1615,7 +1962,7 @@ function setupCameraCapabilities(){
 
     try{
 
-        const capabilities =
+        const caps =
             currentTrack.getCapabilities
                 ? currentTrack.getCapabilities()
                 : {};
@@ -1625,19 +1972,18 @@ function setupCameraCapabilities(){
          * 줌
          */
 
-        if(
-            capabilities.zoom
-        ){
+        if(caps.zoom){
 
             minZoom =
-                capabilities.zoom.min ||
-                1;
+                caps.zoom.min || 1;
 
             maxZoom =
-                capabilities.zoom.max ||
-                1;
+                caps.zoom.max || 1;
 
 
+            /*
+             * 시작 줌
+             */
             currentZoom =
                 Math.min(
                     Math.max(
@@ -1654,16 +2000,13 @@ function setupCameraCapabilities(){
 
 
         /*
-         * 연속 자동초점
+         * 자동초점
          */
 
-        if(
-            capabilities.focusMode
-        ){
+        if(caps.focusMode){
 
             if(
-                capabilities
-                    .focusMode
+                caps.focusMode
                     .includes(
                         "continuous"
                     )
@@ -1691,103 +2034,10 @@ function setupCameraCapabilities(){
     }catch(error){
 
         console.log(
-            "Capability error:",
             error
         );
 
     }
-
-}
-
-
-/* =========================================================
-   스캐너 종료
-========================================================= */
-
-function stopScanner(){
-
-    try{
-
-        if(controls){
-
-            controls.stop();
-
-        }
-
-    }catch(e){}
-
-
-    try{
-
-        if(
-            codeReader &&
-            codeReader.reset
-        ){
-
-            codeReader.reset();
-
-        }
-
-    }catch(e){}
-
-
-    try{
-
-        const video =
-            document.getElementById(
-                "video"
-            );
-
-
-        if(video){
-
-            video.pause();
-
-            if(video.srcObject){
-
-                video
-                    .srcObject
-                    .getTracks()
-                    .forEach(
-                        track =>
-                            track.stop()
-                    );
-
-            }
-
-            video.srcObject =
-                null;
-
-        }
-
-    }catch(e){}
-
-
-    scannerRunning =
-        false;
-
-
-    controls =
-        null;
-
-
-    codeReader =
-        null;
-
-
-    currentTrack =
-        null;
-
-
-    document
-        .getElementById(
-            "scannerBox"
-        )
-        .style.display =
-        "none";
-
-
-    resetCandidate();
 
 }
 
@@ -1798,27 +2048,10 @@ function stopScanner(){
 
 async function zoomIn(){
 
-    if(!currentTrack){
-
-        setStatus(
-            "카메라가 아직 준비되지 않았습니다.",
-            "warning"
-        );
-
-        return;
-
-    }
-
-
     if(
-        maxZoom <=
-        minZoom
+        !currentTrack ||
+        maxZoom <= minZoom
     ){
-
-        setStatus(
-            "이 휴대폰에서는 웹 줌을 지원하지 않습니다.",
-            "warning"
-        );
 
         return;
 
@@ -1827,7 +2060,7 @@ async function zoomIn(){
 
     currentZoom =
         Math.min(
-            currentZoom + 0.5,
+            currentZoom + .5,
             maxZoom
         );
 
@@ -1843,16 +2076,9 @@ async function zoomIn(){
 
 async function zoomOut(){
 
-    if(!currentTrack){
-
-        return;
-
-    }
-
-
     if(
-        maxZoom <=
-        minZoom
+        !currentTrack ||
+        maxZoom <= minZoom
     ){
 
         return;
@@ -1862,7 +2088,7 @@ async function zoomOut(){
 
     currentZoom =
         Math.max(
-            currentZoom - 0.5,
+            currentZoom - .5,
             minZoom
         );
 
@@ -1902,7 +2128,6 @@ async function applyZoom(){
     }catch(error){
 
         console.log(
-            "Zoom error:",
             error
         );
 
@@ -1912,17 +2137,12 @@ async function applyZoom(){
 
 
 /* =========================================================
-   조명
+   손전등
 ========================================================= */
 
 async function toggleTorch(){
 
     if(!currentTrack){
-
-        setStatus(
-            "카메라가 아직 준비되지 않았습니다.",
-            "warning"
-        );
 
         return;
 
@@ -1931,15 +2151,13 @@ async function toggleTorch(){
 
     try{
 
-        const capabilities =
+        const caps =
             currentTrack.getCapabilities
                 ? currentTrack.getCapabilities()
                 : {};
 
 
-        if(
-            !capabilities.torch
-        ){
+        if(!caps.torch){
 
             setStatus(
                 "이 휴대폰에서는 웹 조명을 지원하지 않습니다.",
@@ -1967,15 +2185,97 @@ async function toggleTorch(){
 
             });
 
-
     }catch(error){
 
         console.log(
-            "Torch error:",
             error
         );
 
     }
+
+}
+
+
+/* =========================================================
+   OCR 종료
+========================================================= */
+
+function stopOCR(){
+
+    scanning =
+        false;
+
+
+    processingOCR =
+        false;
+
+
+    clearTimeout(
+        ocrTimer
+    );
+
+
+    ocrTimer =
+        null;
+
+
+    /*
+     * 카메라 종료
+     */
+
+    try{
+
+        if(stream){
+
+            stream
+                .getTracks()
+                .forEach(
+                    track =>
+                        track.stop()
+                );
+
+        }
+
+    }catch(e){}
+
+
+    try{
+
+        if(video){
+
+            video.pause();
+
+            video.srcObject =
+                null;
+
+        }
+
+    }catch(e){}
+
+
+    stream =
+        null;
+
+    video =
+        null;
+
+    currentTrack =
+        null;
+
+
+    /*
+     * UI
+     */
+
+    document
+        .getElementById(
+            "cameraBox"
+        )
+        .style.display =
+        "none";
+
+
+    resetCandidate();
 
 }
 
@@ -1996,16 +2296,20 @@ function manualSearch(){
         input.value.trim();
 
 
-    const materialNo =
-        getExactMaterialNo(
+    const cleaned =
+        normalizeDigits(
             raw
         );
 
 
-    if(!materialNo){
+    if(
+        !/^\d{11}$/.test(
+            cleaned
+        )
+    ){
 
         setStatus(
-            "Material No.는 정확히 11자리 숫자여야 합니다.",
+            "Material No.는 정확히 11자리 숫자로 입력해주세요.",
             "error"
         );
 
@@ -2015,11 +2319,11 @@ function manualSearch(){
 
 
     input.value =
-        materialNo;
+        cleaned;
 
 
     lookupPart(
-        materialNo
+        cleaned
     );
 
 }
@@ -2034,8 +2338,9 @@ function lookupPart(
 ){
 
     partNo =
-        String(partNo || "")
-            .trim();
+        String(
+            partNo || ""
+        ).trim();
 
 
     if(!partNo){
@@ -2068,8 +2373,7 @@ function lookupPart(
 
 
     /*
-     * 현재 페이지가 Google Apps Script 환경이면
-     * 기존 getPart()를 사용
+     * Google Apps Script 환경에서 실행할 경우
      */
     if(
         typeof google !== "undefined" &&
@@ -2108,14 +2412,14 @@ function lookupPart(
                         "none";
 
 
-                    setStatus(
-                        "부품 조회 중 오류가 발생했습니다.",
-                        "error"
+                    console.error(
+                        error
                     );
 
 
-                    console.error(
-                        error
+                    setStatus(
+                        "부품 조회 중 오류가 발생했습니다.",
+                        "error"
                     );
 
                 }
@@ -2133,10 +2437,10 @@ function lookupPart(
 
     /*
      * GitHub Pages 자체에서는
-     * 현재 인식한 번호만 표시
+     * 인식된 번호 표시
      *
-     * 실제 재고 데이터 API가 연결되어 있으면
-     * 이 부분에 API 호출을 연결하면 된다.
+     * 실제 재고 API가 연결되어 있다면
+     * 이 부분에서 API를 호출한다.
      */
 
     displayPart({
@@ -2313,10 +2617,6 @@ function displayPart(
         `;
 
 
-    /*
-     * 실제 데이터 연결 전
-     */
-
     if(
         !name &&
         !spec &&
@@ -2390,42 +2690,27 @@ function escapeHtml(
 
 
 /* =========================================================
-   엔터
-========================================================= */
-
-document
-    .getElementById(
-        "manualBarcode"
-    )
-    .addEventListener(
-        "keydown",
-        function(event){
-
-            if(
-                event.key === "Enter"
-            ){
-
-                event.preventDefault();
-
-                manualSearch();
-
-            }
-
-        }
-    );
-
-
-/* =========================================================
    페이지 종료
 ========================================================= */
 
 window.addEventListener(
     "beforeunload",
-    function(){
+    async function(){
 
         try{
 
-            stopScanner();
+            stopOCR();
+
+        }catch(e){}
+
+
+        try{
+
+            if(worker){
+
+                await worker.terminate();
+
+            }
 
         }catch(e){}
 
@@ -2435,6 +2720,5 @@ window.addEventListener(
 </script>
 
 </body>
-
 </html>
 ```
