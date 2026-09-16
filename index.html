@@ -2,7 +2,6 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-
 <meta charset="UTF-8">
 
 <meta name="viewport"
@@ -13,8 +12,7 @@
 
 <title>부품 재고 조회</title>
 
-<!-- html5-qrcode -->
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
 
@@ -23,10 +21,12 @@
     -webkit-tap-highlight-color:transparent;
 }
 
+html,
 body{
     margin:0;
-    background:#f4f4f4;
-    color:#111;
+    padding:0;
+    background:#111;
+    color:#fff;
     font-family:
         -apple-system,
         BlinkMacSystemFont,
@@ -35,212 +35,417 @@ body{
         sans-serif;
 }
 
+body{
+    min-height:100vh;
+}
+
 .container{
     width:100%;
-    max-width:760px;
+    max-width:900px;
     margin:0 auto;
-    padding:18px 12px 50px;
+    padding:15px 10px 40px;
 }
 
 h1{
     text-align:center;
-    font-size:34px;
-    margin:20px 0 28px;
+    font-size:31px;
+    margin:12px 0 18px;
     font-weight:800;
 }
 
-button{
+
+/* =========================================================
+   시작 버튼
+========================================================= */
+
+#startButton{
     width:100%;
-    height:60px;
+    height:64px;
     border:0;
     border-radius:14px;
-    background:#222;
-    color:white;
-    font-size:18px;
-    font-weight:700;
+    background:#2563eb;
+    color:#fff;
+    font-size:20px;
+    font-weight:800;
     cursor:pointer;
 }
 
-.start-button{
-    margin-bottom:10px;
+#startButton:active{
+    transform:scale(.98);
 }
 
-.file-button{
-    background:#444;
-    margin-bottom:15px;
-}
 
-#reader{
+/* =========================================================
+   스캐너
+========================================================= */
+
+#scannerBox{
     display:none;
     width:100%;
+    margin-top:12px;
     background:#000;
     border-radius:18px;
     overflow:hidden;
-    margin-top:15px;
 }
+
+#reader{
+    position:relative;
+    width:100%;
+    background:#000;
+}
+
+
+/* html5-qrcode가 생성하는 영상 */
 
 #reader video{
     width:100% !important;
+    height:auto !important;
+    min-height:480px;
+    max-height:75vh;
+    object-fit:cover !important;
+    background:#000;
 }
+
+
+/*
+ * 라이브러리가 만드는 스캔 박스 숨김
+ *
+ * 우리가 직접 큰 가이드를 표시한다.
+ */
 
 #reader__scan_region{
-    position:relative;
+    width:100% !important;
 }
 
-.scan-guide{
+
+/* =========================================================
+   큰 스캔 가이드
+========================================================= */
+
+.big-guide{
     position:absolute;
-    top:40%;
-    left:5%;
-    right:5%;
-    height:120px;
+
+    left:2%;
+    right:2%;
+
+    top:50%;
+
+    height:190px;
+
     transform:translateY(-50%);
-    border:3px solid white;
-    border-radius:12px;
+
+    border:4px solid #fff;
+
+    border-radius:14px;
+
     z-index:20;
+
     pointer-events:none;
+
     box-shadow:
         0 0 0 9999px rgba(0,0,0,.28);
 }
 
-.scan-guide::before{
-    content:"Code 39 바코드를 이 안에 맞춰주세요";
+
+/*
+ * 가이드 안쪽 붉은 라인
+ */
+
+.big-guide::after{
+    content:"";
+
     position:absolute;
-    top:-34px;
+
+    left:1%;
+    right:1%;
+
+    top:50%;
+
+    height:3px;
+
+    transform:translateY(-50%);
+
+    background:#ff3b30;
+
+    box-shadow:
+        0 0 10px #ff3b30;
+}
+
+
+/* =========================================================
+   안내문
+========================================================= */
+
+.guide-title{
+    position:absolute;
+
+    top:15px;
+
     left:0;
     right:0;
+
     text-align:center;
-    color:white;
-    font-size:14px;
-    font-weight:700;
-    text-shadow:0 2px 5px #000;
-}
 
-.scan-guide::after{
-    content:"";
-    position:absolute;
-    left:5%;
-    right:5%;
-    top:50%;
-    height:3px;
-    background:#ff3b30;
-    box-shadow:0 0 8px #ff3b30;
-}
+    color:#fff;
 
-.camera-controls{
-    display:flex;
-    gap:8px;
-    padding:10px;
-    background:#111;
-}
-
-.camera-controls button{
-    height:48px;
     font-size:15px;
-    background:#333;
+
+    font-weight:800;
+
+    z-index:30;
+
+    text-shadow:
+        0 2px 5px #000;
 }
 
-.stop-button{
-    background:#e5e5e5 !important;
-    color:#111 !important;
-    margin-top:10px;
-}
+.guide-bottom{
+    position:absolute;
 
-.status{
-    min-height:24px;
-    margin:12px 0;
+    left:0;
+    right:0;
+
+    bottom:72px;
+
     text-align:center;
+
+    color:#fff;
+
+    font-size:14px;
+
+    font-weight:700;
+
+    z-index:30;
+
+    text-shadow:
+        0 2px 5px #000;
+}
+
+#scanStatus{
+    position:absolute;
+
+    left:50%;
+
+    top:55px;
+
+    transform:translateX(-50%);
+
+    background:rgba(0,0,0,.7);
+
+    padding:8px 14px;
+
+    border-radius:20px;
+
+    color:#fff;
+
+    font-size:13px;
+
+    font-weight:800;
+
+    white-space:nowrap;
+
+    z-index:30;
+}
+
+
+/* =========================================================
+   종료 버튼
+========================================================= */
+
+#stopButton{
+    width:100%;
+    height:56px;
+
+    margin-top:8px;
+
+    border:0;
+    border-radius:13px;
+
+    background:#e5e7eb;
+    color:#111827;
+
+    font-size:18px;
+    font-weight:800;
+}
+
+
+/* =========================================================
+   결과
+========================================================= */
+
+#status{
+    min-height:26px;
+
+    margin:14px 0;
+
+    text-align:center;
+
     font-size:16px;
+    font-weight:700;
 }
 
 .success{
-    color:#16833b;
-    font-weight:700;
+    color:#22c55e;
 }
 
 .warning{
-    color:#996600;
-    font-weight:700;
+    color:#facc15;
 }
 
 .error{
-    color:#d93025;
-    font-weight:700;
+    color:#f87171;
 }
+
+
+/* =========================================================
+   디버그
+========================================================= */
 
 .debug{
     display:none;
-    background:white;
+
+    background:#fff;
+
+    color:#111;
+
     border-radius:14px;
+
     padding:14px;
-    margin-top:12px;
-    box-shadow:0 2px 10px rgba(0,0,0,.06);
+
+    margin-top:10px;
 }
 
-.debug-title{
+.debug-label{
     color:#777;
+
     font-size:13px;
-    margin-bottom:6px;
+
+    margin-bottom:5px;
 }
 
 .debug-value{
-    font-size:18px;
+    font-size:20px;
+
     font-weight:800;
+
     word-break:break-all;
 }
+
+
+/* =========================================================
+   결과 카드
+========================================================= */
 
 .result{
     display:none;
-    background:white;
+
+    background:#fff;
+
+    color:#111;
+
     border-radius:18px;
-    padding:20px;
-    margin-top:16px;
-    box-shadow:0 3px 15px rgba(0,0,0,.08);
+
+    padding:18px;
+
+    margin-top:14px;
+
+    box-shadow:
+        0 3px 15px rgba(0,0,0,.15);
 }
 
-.row{
+.result-row{
     padding:15px 0;
+
     border-bottom:1px solid #eee;
 }
 
-.row:last-child{
+.result-row:last-child{
     border-bottom:0;
 }
 
-.label{
-    color:#777;
+.result-label{
     font-size:14px;
+    color:#777;
     margin-bottom:6px;
 }
 
-.value{
-    font-size:25px;
+.result-value{
+    font-size:26px;
     font-weight:800;
     word-break:break-all;
 }
 
+
+/* =========================================================
+   수동
+========================================================= */
+
 .manual{
     display:none;
-    margin-top:18px;
+
+    margin-top:14px;
 }
 
 .manual input{
     width:100%;
-    height:55px;
-    border:1px solid #ccc;
-    border-radius:12px;
-    padding:0 15px;
-    font-size:18px;
-    background:white;
+    height:52px;
+
     margin-bottom:8px;
+
+    padding:0 14px;
+
+    border:1px solid #d1d5db;
+
+    border-radius:12px;
+
+    font-size:18px;
 }
 
 .manual button{
-    height:55px;
+    width:100%;
+    height:52px;
+
+    border:0;
+    border-radius:12px;
+
+    background:#2563eb;
+    color:#fff;
+
+    font-size:18px;
+    font-weight:800;
+}
+
+
+/* =========================================================
+   모바일
+========================================================= */
+
+@media(max-width:600px){
+
+    .container{
+        padding:10px 8px 30px;
+    }
+
+    h1{
+        font-size:28px;
+        margin:10px 0 15px;
+    }
+
+    #reader video{
+        min-height:500px;
+        max-height:75vh;
+    }
+
+    .big-guide{
+        left:1.5%;
+        right:1.5%;
+        height:165px;
+    }
+
 }
 
 </style>
-
 </head>
+
 
 <body>
 
@@ -249,81 +454,73 @@ button{
 <h1>부품 재고 조회</h1>
 
 
-<!-- =====================================================
-     카메라 시작
-====================================================== -->
-
 <button
     id="startButton"
-    class="start-button"
     onclick="startScanner()">
 
-    📷 Code 39 스캔
+    📷 Code 39 바코드 스캔
 
 </button>
 
 
-<!-- =====================================================
-     사진으로 스캔
-====================================================== -->
+<div id="scannerBox">
 
-<button
-    class="file-button"
-    onclick="document.getElementById('fileInput').click()">
-
-    🖼️ 사진으로 바코드 읽기
-
-</button>
-
-<input
-    id="fileInput"
-    type="file"
-    accept="image/*"
-    style="display:none"
-    onchange="scanImageFile(event)">
+    <div id="reader"></div>
 
 
-<!-- =====================================================
-     카메라
-====================================================== -->
+    <!-- 큰 가이드 -->
 
-<div id="reader">
+    <div class="big-guide"></div>
 
-    <div class="scan-guide"></div>
 
-    <div class="camera-controls">
+    <div class="guide-title">
 
-        <button onclick="stopScanner()">
-            스캔 종료
-        </button>
+        바코드를 흰색 박스에 최대한 크게 맞춰주세요
 
     </div>
 
+
+    <div id="scanStatus">
+
+        카메라 준비 중...
+
+    </div>
+
+
+    <div class="guide-bottom">
+
+        바코드 전체가 화면에 들어오게 하세요
+
+    </div>
+
+
+    <button
+        id="stopButton"
+        onclick="stopScanner()">
+
+        스캔 종료
+
+    </button>
+
 </div>
 
-
-<!-- =====================================================
-     상태
-====================================================== -->
 
 <div
     id="status"
-    class="status">
+    class="warning">
 
-    Code 39 바코드를 스캔하세요.
+    바코드를 스캔하세요.
 
 </div>
 
 
-<!-- =====================================================
-     원본
-====================================================== -->
+<!-- 원본 -->
 
 <div
-    id="rawBox"
+    id="rawDebug"
     class="debug">
 
-    <div class="debug-title">
+    <div class="debug-label">
         Code 39 원본
     </div>
 
@@ -335,16 +532,14 @@ button{
 </div>
 
 
-<!-- =====================================================
-     추출값
-====================================================== -->
+<!-- 뒤 9자리 -->
 
 <div
-    id="partBox"
+    id="partDebug"
     class="debug">
 
-    <div class="debug-title">
-        뒤 9자리
+    <div class="debug-label">
+        추출된 부품번호
     </div>
 
     <div
@@ -355,37 +550,34 @@ button{
 </div>
 
 
-<!-- =====================================================
-     결과
-====================================================== -->
+<!-- 결과 -->
 
 <div
     id="result"
     class="result">
 
-    <div class="row">
+    <div class="result-row">
 
-        <div class="label">
+        <div class="result-label">
             부품번호
         </div>
 
         <div
             id="materialResult"
-            class="value">
+            class="result-value">
         </div>
 
     </div>
 
 
-    <div class="row">
+    <div class="result-row">
 
-        <div class="label">
+        <div class="result-label">
             Quantity
         </div>
 
         <div
-            id="quantityResult"
-            class="value">
+            class="result-value">
 
             -
 
@@ -396,9 +588,7 @@ button{
 </div>
 
 
-<!-- =====================================================
-     수동
-====================================================== -->
+<!-- 수동 -->
 
 <div
     id="manualBox"
@@ -409,8 +599,7 @@ button{
         type="text"
         placeholder="부품번호 9자리">
 
-    <button
-        onclick="manualSearch()">
+    <button onclick="manualSearch()">
 
         입력
 
@@ -424,37 +613,33 @@ button{
 <script>
 
 /* =========================================================
-   기본
+   상태
 ========================================================= */
 
 let scanner = null;
 
-let scanning = false;
+let running = false;
 
-let currentPart = "";
+let candidate = "";
 
-let lastResult = "";
+let candidateCount = 0;
 
-let lastResultTime = 0;
+let finalPart = "";
 
 
 /*
- * 같은 결과를 여러 번 확인
+ * 2회 동일 인식 후 확정
  */
-const REQUIRED_CONFIRM = 2;
-
-let confirmValue = "";
-
-let confirmCount = 0;
+const CONFIRM_COUNT = 2;
 
 
 /* =========================================================
-   상태
+   상태 표시
 ========================================================= */
 
 function setStatus(
     text,
-    type = ""
+    type = "warning"
 ){
 
     const el =
@@ -466,24 +651,16 @@ function setStatus(
         text;
 
     el.className =
-        "status";
-
-    if(type){
-
-        el.classList.add(
-            type
-        );
-
-    }
+        type;
 
 }
 
 
 /* =========================================================
-   Code 39 원본 → 뒤 9자리
+   뒤 9자리 추출
 ========================================================= */
 
-function extractLast9(
+function getLast9(
     raw
 ){
 
@@ -504,7 +681,7 @@ function extractLast9(
 
 
     /*
-     * Code 39 Start / Stop 문자 제거
+     * Code39 start/stop *
      */
     value =
         value.replace(
@@ -520,14 +697,17 @@ function extractLast9(
 
 
     /*
-     * 앞뒤 공백 제거
+     * 공백 제거
      */
     value =
-        value.trim();
+        value.replace(
+            /\s+/g,
+            ""
+        );
 
 
     /*
-     * 최소 9자리 필요
+     * 최소 9자리
      */
     if(
         value.length < 9
@@ -539,7 +719,7 @@ function extractLast9(
 
 
     /*
-     * ★ 무조건 마지막 9자리
+     * 뒤 9자리만
      */
     return value.slice(
         -9
@@ -549,42 +729,37 @@ function extractLast9(
 
 
 /* =========================================================
-   결과 처리
+   바코드 결과
 ========================================================= */
 
-function handleBarcode(
-    raw
+function onBarcodeRead(
+    decodedText,
+    decodedResult
 ){
 
-    if(!raw){
+    if(!running){
 
         return;
 
     }
 
 
-    const now =
-        Date.now();
-
-
-    /*
-     * 같은 값 계속 들어오는 것 방지
-     */
-    if(
-        raw === lastResult &&
-        now - lastResultTime < 1000
-    ){
+    if(!decodedText){
 
         return;
 
     }
 
 
-    lastResult =
-        raw;
+    const raw =
+        String(decodedText)
+            .trim();
 
-    lastResultTime =
-        now;
+
+    console.log(
+        "CODE39 RAW:",
+        raw
+    );
 
 
     /*
@@ -593,7 +768,7 @@ function handleBarcode(
 
     document
         .getElementById(
-            "rawBox"
+            "rawDebug"
         )
         .style.display =
         "block";
@@ -612,17 +787,12 @@ function handleBarcode(
      */
 
     const part =
-        extractLast9(
+        getLast9(
             raw
         );
 
 
     if(!part){
-
-        setStatus(
-            "바코드는 읽었지만 9자리를 추출하지 못했습니다.",
-            "warning"
-        );
 
         return;
 
@@ -630,33 +800,12 @@ function handleBarcode(
 
 
     /*
-     * 같은 값 확인
-     */
-
-    if(
-        part === confirmValue
-    ){
-
-        confirmCount++;
-
-    }else{
-
-        confirmValue =
-            part;
-
-        confirmCount =
-            1;
-
-    }
-
-
-    /*
-     * 추출값 표시
+     * 화면 표시
      */
 
     document
         .getElementById(
-            "partBox"
+            "partDebug"
         )
         .style.display =
         "block";
@@ -670,32 +819,59 @@ function handleBarcode(
         part;
 
 
-    setStatus(
-        "부품번호 확인 " +
-        Math.min(
-            confirmCount,
-            REQUIRED_CONFIRM
-        ) +
-        "/" +
-        REQUIRED_CONFIRM,
-        "warning"
-    );
-
-
     /*
-     * 2번 확인
+     * 같은 결과 반복 확인
      */
 
     if(
-        confirmCount >=
-        REQUIRED_CONFIRM
+        part === candidate
     ){
 
-        currentPart =
+        candidateCount++;
+
+    }else{
+
+        candidate =
+            part;
+
+        candidateCount =
+            1;
+
+    }
+
+
+    document
+        .getElementById(
+            "scanStatus"
+        )
+        .textContent =
+
+        "확인 중 " +
+
+        Math.min(
+            candidateCount,
+            CONFIRM_COUNT
+        ) +
+
+        "/" +
+
+        CONFIRM_COUNT;
+
+
+    /*
+     * 최종 확정
+     */
+
+    if(
+        candidateCount >=
+        CONFIRM_COUNT
+    ){
+
+        finalPart =
             part;
 
 
-        finishBarcode();
+        finishScan();
 
     }
 
@@ -703,54 +879,12 @@ function handleBarcode(
 
 
 /* =========================================================
-   스캔 완료
-========================================================= */
-
-function finishBarcode(){
-
-    stopScanner();
-
-
-    document
-        .getElementById(
-            "materialResult"
-        )
-        .textContent =
-        currentPart;
-
-
-    document
-        .getElementById(
-            "quantityResult"
-        )
-        .textContent =
-        "-";
-
-
-    document
-        .getElementById(
-            "result"
-        )
-        .style.display =
-        "block";
-
-
-    setStatus(
-        "✅ 부품번호 인식 완료: " +
-        currentPart,
-        "success"
-    );
-
-}
-
-
-/* =========================================================
-   카메라 시작
+   시작
 ========================================================= */
 
 async function startScanner(){
 
-    if(scanning){
+    if(running){
 
         return;
 
@@ -758,25 +892,33 @@ async function startScanner(){
 
 
     /*
-     * 상태 초기화
+     * 초기화
      */
 
-    confirmValue =
+    candidate =
         "";
 
-    confirmCount =
+    candidateCount =
         0;
 
-    currentPart =
+    finalPart =
         "";
 
 
     document
         .getElementById(
-            "reader"
+            "scannerBox"
         )
         .style.display =
         "block";
+
+
+    document
+        .getElementById(
+            "startButton"
+        )
+        .style.display =
+        "none";
 
 
     document
@@ -789,7 +931,7 @@ async function startScanner(){
 
     document
         .getElementById(
-            "rawBox"
+            "rawDebug"
         )
         .style.display =
         "none";
@@ -797,7 +939,7 @@ async function startScanner(){
 
     document
         .getElementById(
-            "partBox"
+            "partDebug"
         )
         .style.display =
         "none";
@@ -811,68 +953,72 @@ async function startScanner(){
 
     try{
 
-        /*
-         * CODE_39만 사용
-         */
-        const formats =
-            [
-                Html5QrcodeSupportedFormats
-                    .CODE_39
-            ];
-
-
         scanner =
             new Html5Qrcode(
                 "reader"
             );
 
 
+        /*
+         * Code 39만 지원
+         */
+
         const config = {
 
-            fps:10,
+            fps:15,
+
+            /*
+             * 매우 넓은 스캔 영역
+             */
 
             qrbox:function(
                 width,
                 height
             ){
 
-                /*
-                 * 가로로 긴 바코드에 맞게
-                 * 스캔 영역을 설정
-                 */
-                const boxWidth =
-                    Math.floor(
-                        width * .88
-                    );
-
-
-                const boxHeight =
-                    Math.floor(
-                        Math.min(
-                            180,
-                            height * .22
-                        )
-                    );
-
-
                 return {
+
                     width:
-                        boxWidth,
+                        Math.floor(
+                            width * .94
+                        ),
 
                     height:
-                        boxHeight
+                        Math.floor(
+                            Math.min(
+                                190,
+                                height * .30
+                            )
+                        )
+
                 };
 
             },
 
 
-            aspectRatio:1.7777778,
+            aspectRatio:
+                1.7777778,
 
-            formatsToSupport:
-                formats,
+
+            formatsToSupport:[
+
+                Html5QrcodeSupportedFormats
+                    .CODE_39
+
+            ],
+
 
             rememberLastUsedCamera:
                 true,
+
+
+            experimentalFeatures:{
+
+                useBarCodeDetectorIfSupported:
+                    true
+
+            },
+
 
             showTorchButtonIfSupported:
                 true
@@ -881,7 +1027,7 @@ async function startScanner(){
 
 
         /*
-         * 카메라 목록 확인
+         * 카메라 목록
          */
 
         const cameras =
@@ -895,28 +1041,29 @@ async function startScanner(){
         ){
 
             throw new Error(
-                "카메라가 없습니다."
+                "카메라를 찾을 수 없습니다."
             );
 
         }
 
 
         /*
-         * 후면 카메라 우선
+         * 후면 카메라 선택
          */
 
         let camera =
             cameras.find(
-                c => {
+                function(c){
 
                     const label =
                         String(
-                            c.label ||
-                            ""
-                        ).toLowerCase();
+                            c.label || ""
+                        )
+                        .toLowerCase();
 
 
                     return(
+
                         label.includes(
                             "back"
                         ) ||
@@ -934,6 +1081,11 @@ async function startScanner(){
                 }
             );
 
+
+        /*
+         * 못 찾으면
+         * 마지막 카메라
+         */
 
         if(!camera){
 
@@ -960,15 +1112,9 @@ async function startScanner(){
                 decodedResult
             ){
 
-                console.log(
-                    "CODE39:",
+                onBarcodeRead(
                     decodedText,
                     decodedResult
-                );
-
-
-                handleBarcode(
-                    decodedText
                 );
 
             },
@@ -976,46 +1122,72 @@ async function startScanner(){
             function(errorMessage){
 
                 /*
-                 * 정상적인 탐색 중에는
-                 * 오류 메시지를 표시하지 않는다.
+                 * 스캔 실패 메시지는 정상
                  */
-
             }
 
         );
 
 
-        scanning =
+        running =
             true;
 
 
         setStatus(
-            "Code 39 바코드를 화면 중앙에 맞춰주세요.",
+            "Code 39 바코드를 가까이 대주세요.",
             "warning"
+        );
+
+
+        document
+            .getElementById(
+                "scanStatus"
+            )
+            .textContent =
+            "Code 39 인식 중...";
+
+
+        /*
+         * 비디오가 생성된 뒤
+         * 카메라 설정 시도
+         */
+
+        setTimeout(
+            setupVideoCamera,
+            1000
         );
 
 
     }catch(error){
 
         console.error(
+            "Scanner error:",
             error
         );
 
 
-        scanning =
+        running =
             false;
 
 
         document
             .getElementById(
-                "reader"
+                "scannerBox"
             )
             .style.display =
             "none";
 
 
+        document
+            .getElementById(
+                "startButton"
+            )
+            .style.display =
+            "block";
+
+
         setStatus(
-            "카메라를 시작하지 못했습니다.",
+            "카메라를 열 수 없습니다.",
             "error"
         );
 
@@ -1033,95 +1205,131 @@ async function startScanner(){
 
 
 /* =========================================================
-   사진 파일 스캔
+   카메라 직접 설정
 ========================================================= */
 
-async function scanImageFile(
-    event
-){
-
-    const file =
-        event.target.files &&
-        event.target.files[0];
-
-
-    if(!file){
-
-        return;
-
-    }
-
-
-    setStatus(
-        "사진에서 Code 39를 찾고 있습니다...",
-        "warning"
-    );
-
+function setupVideoCamera(){
 
     try{
 
-        /*
-         * 임시 스캐너
-         */
-        const tempScanner =
-            new Html5Qrcode(
-                "reader"
-            );
-
-
-        /*
-         * 파일 스캔
-         */
-        const result =
-            await tempScanner
-                .scanFile(
-                    file,
-                    true
+        const video =
+            document
+                .querySelector(
+                    "#reader video"
                 );
 
 
-        console.log(
-            "파일 Code39:",
-            result
-        );
+        if(
+            !video ||
+            !video.srcObject
+        ){
+
+            return;
+
+        }
 
 
-        handleBarcode(
-            result
-        );
+        const tracks =
+            video
+                .srcObject
+                .getVideoTracks();
 
+
+        if(
+            !tracks ||
+            !tracks.length
+        ){
+
+            return;
+
+        }
+
+
+        const track =
+            tracks[0];
+
+
+        currentTrack =
+            track;
+
+
+        const capabilities =
+            track.getCapabilities
+                ? track.getCapabilities()
+                : {};
+
+
+        /*
+         * 자동 초점
+         */
+
+        if(
+            capabilities.focusMode &&
+            capabilities.focusMode
+                .includes(
+                    "continuous"
+                )
+        ){
+
+            track
+                .applyConstraints({
+
+                    advanced:[
+                        {
+                            focusMode:
+                                "continuous"
+                        }
+                    ]
+
+                })
+                .catch(
+                    () => {}
+                );
+
+        }
+
+
+        /*
+         * 해상도 최대한 높게
+         */
 
         try{
 
-            tempScanner.clear();
+            track
+                .applyConstraints({
+
+                    width:{
+                        ideal:1920
+                    },
+
+                    height:{
+                        ideal:1080
+                    }
+
+                })
+                .catch(
+                    () => {}
+                );
 
         }catch(e){}
 
-
     }catch(error){
 
-        console.error(
+        console.log(
+            "Camera setup:",
             error
-        );
-
-
-        setStatus(
-            "사진에서 Code 39를 찾지 못했습니다. 바코드를 크게 찍어주세요.",
-            "error"
         );
 
     }
 
-
-    /*
-     * 같은 파일 다시 선택할 수 있도록
-     * input 초기화
-     */
-
-    event.target.value =
-        "";
-
 }
+
+
+/* =========================================================
+   현재 카메라 트랙
+========================================================= */
+
+let currentTrack = null;
 
 
 /* =========================================================
@@ -1130,24 +1338,19 @@ async function scanImageFile(
 
 async function stopScanner(){
 
+    running =
+        false;
+
+
     try{
 
-        if(
-            scanner &&
-            scanning
-        ){
+        if(scanner){
 
             await scanner.stop();
 
         }
 
-    }catch(error){
-
-        console.log(
-            error
-        );
-
-    }
+    }catch(e){}
 
 
     try{
@@ -1158,22 +1361,48 @@ async function stopScanner(){
 
         }
 
-    }catch(error){}
+    }catch(e){}
+
+
+    try{
+
+        if(currentTrack){
+
+            currentTrack.stop();
+
+        }
+
+    }catch(e){}
 
 
     scanner =
         null;
 
-    scanning =
-        false;
+    currentTrack =
+        null;
 
 
     document
         .getElementById(
-            "reader"
+            "scannerBox"
         )
         .style.display =
         "none";
+
+
+    document
+        .getElementById(
+            "startButton"
+        )
+        .style.display =
+        "block";
+
+
+    candidate =
+        "";
+
+    candidateCount =
+        0;
 
 }
 
@@ -1208,7 +1437,7 @@ function manualSearch(){
     }
 
 
-    currentPart =
+    finalPart =
         value;
 
 
@@ -1217,15 +1446,7 @@ function manualSearch(){
             "materialResult"
         )
         .textContent =
-        currentPart;
-
-
-    document
-        .getElementById(
-            "quantityResult"
-        )
-        .textContent =
-        "-";
+        finalPart;
 
 
     document
@@ -1237,7 +1458,7 @@ function manualSearch(){
 
 
     setStatus(
-        "✅ 입력 완료",
+        "✅ 부품번호 입력 완료",
         "success"
     );
 
