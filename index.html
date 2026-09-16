@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>부품 재고 조회</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: #f5f5f5;
+}
+
+.container {
+    max-width: 500px;
+    margin: auto;
+}
+
+h1 {
+    text-align: center;
+}
+
+button {
+    width: 100%;
+    padding: 16px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    background: #222;
+    color: white;
+    font-size: 18px;
+}
+
+input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 15px;
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 18px;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 12px;
+}
+
+.row {
+    margin: 12px 0;
+    font-size: 18px;
+}
+
+.label {
+    color: #777;
+    font-size: 14px;
+}
+
+.value {
+    font-weight: bold;
+    margin-top: 3px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>부품 재고 조회</h1>
+
+<button onclick="scanBarcode()">📷 바코드 스캔</button>
+
+<input
+    id="barcode"
+    type="text"
+    placeholder="바코드를 직접 입력할 수도 있습니다"
+>
+
+<button onclick="searchPart()">부품 조회</button>
+
+<div id="result"></div>
+
+</div>
+
+<script>
+
+function scanBarcode() {
+
+    if (!("BarcodeDetector" in window)) {
+        alert("이 브라우저에서는 카메라 바코드 스캔을 지원하지 않습니다.");
+        return;
+    }
+
+    navigator.mediaDevices.getUserMedia({
+        video: {
+            facingMode: "environment"
+        }
+    }).then(stream => {
+
+        alert("카메라가 실행되었습니다.");
+
+        stream.getTracks().forEach(track => track.stop());
+
+    }).catch(error => {
+
+        alert("카메라 권한을 허용해주세요.");
+
+    });
+}
+
+
+function searchPart() {
+
+    const barcode =
+        document.getElementById("barcode").value.trim();
+
+    if (!barcode) {
+        alert("바코드를 입력해주세요.");
+        return;
+    }
+
+    document.getElementById("result").innerHTML = `
+
+        <div class="card">
+
+            <div class="row">
+                <div class="label">바코드</div>
+                <div class="value">${barcode}</div>
+            </div>
+
+            <div class="row">
+                <div class="label">부품번호</div>
+                <div class="value">-</div>
+            </div>
+
+            <div class="row">
+                <div class="label">부품명</div>
+                <div class="value">-</div>
+            </div>
+
+            <div class="row">
+                <div class="label">현재고</div>
+                <div class="value">-</div>
+            </div>
+
+            <div class="row">
+                <div class="label">현재 로케이션</div>
+                <div class="value">-</div>
+            </div>
+
+            <hr>
+
+            <div class="label">
+                새 로케이션
+            </div>
+
+            <input
+                id="newLocation"
+                type="text"
+                placeholder="예: A-03-02"
+            >
+
+            <button onclick="changeLocation()">
+                로케이션 변경
+            </button>
+
+        </div>
+
+    `;
+}
+
+
+function changeLocation() {
+
+    const location =
+        document.getElementById("newLocation").value.trim();
+
+    if (!location) {
+        alert("새 로케이션을 입력해주세요.");
+        return;
+    }
+
+    alert(
+        "로케이션 변경 요청: " + location
+    );
+}
+
+</script>
+
+</body>
+</html>
