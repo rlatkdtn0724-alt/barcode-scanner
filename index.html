@@ -1,282 +1,590 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>부품 재고 조회</title>
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<title>부품 바코드 스캐너</title>
+
+<script src="https://unpkg.com/html5-qrcode"
+        type="text/javascript"></script>
 
 <style>
+
+* {
+    box-sizing: border-box;
+}
+
 body {
     margin: 0;
-    padding: 20px;
+    padding: 16px;
+    background: #111;
+    color: white;
     font-family: Arial, sans-serif;
-    background: #f5f5f5;
 }
 
 .container {
-    max-width: 500px;
+    max-width: 600px;
     margin: auto;
 }
 
 h1 {
     text-align: center;
+    font-size: 24px;
+    margin: 10px 0 20px;
 }
+
+.status {
+    text-align: center;
+    background: #222;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
+    color: #ddd;
+}
+
+#reader {
+    width: 100%;
+    background: black;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+/* 카메라 영상 */
+
+#reader video {
+    width: 100% !important;
+    height: auto !important;
+    object-fit: cover !important;
+}
+
+/* 버튼 */
 
 button {
     width: 100%;
-    padding: 16px;
-    margin-top: 10px;
     border: 0;
     border-radius: 10px;
-    background: #222;
-    color: white;
+    padding: 16px;
+    margin-top: 12px;
     font-size: 18px;
+    font-weight: bold;
+    background: white;
+    color: black;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+.stop {
+    background: #d32f2f;
+    color: white;
+}
+
+/* 결과 */
+
+.result {
+    background: white;
+    color: black;
+    border-radius: 15px;
+    padding: 20px;
+    margin-top: 18px;
+}
+
+.result-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.barcode {
+    font-size: 25px;
+    font-weight: bold;
+    word-break: break-all;
+    padding: 15px;
+    background: #eee;
+    border-radius: 10px;
+    text-align: center;
 }
 
 input {
     width: 100%;
-    box-sizing: border-box;
     padding: 15px;
-    margin-top: 10px;
+    margin-top: 12px;
     border: 1px solid #ccc;
     border-radius: 8px;
     font-size: 18px;
 }
 
-#reader {
-    width: 100%;
+.info {
     margin-top: 20px;
-    background: white;
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.card {
-    background: white;
-    padding: 20px;
-    margin-top: 20px;
-    border-radius: 12px;
-}
-
-.row {
-    margin: 15px 0;
-}
-
-.label {
-    color: #777;
+    color: #aaa;
     font-size: 14px;
+    line-height: 1.6;
 }
 
-.value {
-    font-size: 20px;
-    font-weight: bold;
-    margin-top: 5px;
+.hidden {
+    display: none;
 }
+
 </style>
+
 </head>
+
 
 <body>
 
 <div class="container">
 
-<h1>부품 재고 조회</h1>
+<h1>📦 부품 바코드 스캐너</h1>
 
-<button id="scanButton" onclick="startScanner()">
-📷 바코드 스캔 시작
-</button>
+
+<div id="status"
+     class="status">
+
+카메라를 시작해주세요.
+
+</div>
+
 
 <div id="reader"></div>
 
-<input
-    id="barcode"
-    type="text"
-    placeholder="바코드 번호"
->
 
-<button onclick="searchPart()">
-부품 조회
+<button id="startButton"
+        onclick="startScanner()">
+
+📷 카메라 시작
+
 </button>
 
-<div id="result"></div>
+
+<button id="stopButton"
+        class="stop hidden"
+        onclick="stopScanner()">
+
+⛔ 스캔 종료
+
+</button>
+
+
+<div id="result"
+     class="result hidden">
+
+<div class="result-title">
+
+✅ 바코드 인식 완료
+
+</div>
+
+
+<div id="barcodeResult"
+     class="barcode">
+
+</div>
+
+
+<button onclick="restartScanner()">
+
+📷 다시 스캔
+
+</button>
+
+
+</div>
+
+
+<div class="info">
+
+바코드를 화면 가운데에 맞춰주세요.<br>
+가로로 긴 바코드는 가로 방향으로 맞추면 인식이 잘 됩니다.<br>
+비닐 반사가 심하면 플래시를 끄고 조금 움직여주세요.
+
+</div>
 
 </div>
 
 
 <script>
 
-let html5QrCode = null;
+
+let scanner = null;
+
 let scanning = false;
+
+let lastResult = "";
+
+let lastScanTime = 0;
+
+
+/*
+    지원할 바코드 형식
+
+    일반적인 자동차 부품 라벨에서 많이 사용하는
+    1D 바코드 형식을 중심으로 설정
+*/
+
+const formats = [
+
+    Html5QrcodeSupportedFormats.CODE_128,
+
+    Html5QrcodeSupportedFormats.CODE_39,
+
+    Html5QrcodeSupportedFormats.CODE_93,
+
+    Html5QrcodeSupportedFormats.ITF,
+
+    Html5QrcodeSupportedFormats.EAN_13,
+
+    Html5QrcodeSupportedFormats.EAN_8,
+
+    Html5QrcodeSupportedFormats.UPC_A,
+
+    Html5QrcodeSupportedFormats.UPC_E,
+
+    Html5QrcodeSupportedFormats.CODABAR
+
+];
 
 
 function startScanner() {
 
+
     if (scanning) {
+
         return;
+
     }
 
-    html5QrCode = new Html5Qrcode("reader");
 
-    html5QrCode.start(
+    document.getElementById("status").innerText =
+        "카메라를 시작하는 중...";
+
+
+    scanner = new Html5Qrcode(
+
+        "reader",
 
         {
-            facingMode: "environment"
+
+            formatsToSupport: formats,
+
+            useBarCodeDetectorIfSupported: true
+
+        }
+
+    );
+
+
+    const config = {
+
+        fps: 15,
+
+        aspectRatio: 1.7777778,
+
+        qrbox: function(
+            viewfinderWidth,
+            viewfinderHeight
+        ) {
+
+            /*
+                가로로 긴 스캔 영역
+
+                BMW 부품 태그처럼
+                가로로 긴 1D 바코드에 맞춤
+            */
+
+            const width =
+                Math.min(
+                    viewfinderWidth * 0.90,
+                    500
+                );
+
+            const height = 120;
+
+            return {
+                width: width,
+                height: height
+            };
+
         },
 
+        disableFlip: true,
+
+        videoConstraints: {
+
+            facingMode: {
+                ideal: "environment"
+            },
+
+            width: {
+                ideal: 1920
+            },
+
+            height: {
+                ideal: 1080
+            },
+
+            focusMode: "continuous"
+
+        }
+
+    };
+
+
+    scanner.start(
+
         {
-            fps: 10,
-            qrbox: {
-                width: 280,
-                height: 150
+            facingMode: {
+                ideal: "environment"
             }
         },
 
-        function(decodedText) {
+        config,
 
-            document.getElementById("barcode").value = decodedText;
+        function(decodedText, decodedResult) {
 
-            stopScanner();
-
-            searchPart();
+            handleScan(decodedText);
 
         },
 
         function(errorMessage) {
-            // 스캔 중 오류는 무시
+
+            /*
+                스캔 중 바코드를 찾지 못한 오류는
+                화면에 표시하지 않음
+            */
+
         }
 
-    ).then(function() {
+    )
+
+    .then(function() {
+
 
         scanning = true;
 
-        document.getElementById("scanButton").innerText =
-            "📷 바코드 스캔 중...";
 
-    }).catch(function(error) {
+        document.getElementById("status").innerText =
+            "🔎 바코드를 가운데 가로줄에 맞춰주세요.";
+
+
+        document
+            .getElementById("startButton")
+            .classList.add("hidden");
+
+
+        document
+            .getElementById("stopButton")
+            .classList.remove("hidden");
+
+
+        /*
+            카메라가 실행된 후
+            줌/플래시 기능을 확인
+        */
+
+        setTimeout(function() {
+
+            addCameraControls();
+
+        }, 500);
+
+
+    })
+
+    .catch(function(error) {
+
+
+        console.error(error);
+
+
+        document.getElementById("status").innerText =
+            "카메라를 실행할 수 없습니다.";
+
 
         alert(
+
             "카메라를 실행할 수 없습니다.\n\n" +
+
+            "1. 브라우저 카메라 권한을 확인해주세요.\n" +
+
+            "2. HTTPS 주소인지 확인해주세요.\n\n" +
+
             error
+
         );
 
     });
+
 }
 
 
-function stopScanner() {
+/*
+    바코드 인식
+*/
 
-    if (!html5QrCode || !scanning) {
+function handleScan(decodedText) {
+
+
+    const now = Date.now();
+
+
+    /*
+        같은 바코드가 여러 번 인식되는 것을 방지
+    */
+
+    if (
+        decodedText === lastResult &&
+        now - lastScanTime < 3000
+    ) {
+
         return;
+
     }
 
-    html5QrCode.stop().then(function() {
 
-        html5QrCode.clear();
+    lastResult = decodedText;
+
+    lastScanTime = now;
+
+
+    document.getElementById("barcodeResult").innerText =
+        decodedText;
+
+
+    document.getElementById("result")
+        .classList.remove("hidden");
+
+
+    document.getElementById("status").innerText =
+        "✅ 바코드 인식 완료";
+
+
+    stopScanner();
+
+
+    /*
+        여기에서 나중에
+
+        바코드 → 엑셀 데이터 검색
+
+        을 연결할 예정
+    */
+
+}
+
+
+/*
+    스캐너 종료
+*/
+
+function stopScanner() {
+
+
+    if (!scanner || !scanning) {
+
+        return;
+
+    }
+
+
+    scanner.stop()
+
+    .then(function() {
+
+
+        scanner.clear();
+
+
+        scanner = null;
 
         scanning = false;
 
-        document.getElementById("scanButton").innerText =
-            "📷 바코드 스캔 시작";
+
+        document
+            .getElementById("stopButton")
+            .classList.add("hidden");
+
+
+        document
+            .getElementById("startButton")
+            .classList.remove("hidden");
+
+
+    })
+
+    .catch(function(error) {
+
+        console.log(error);
 
     });
 
 }
 
 
-function searchPart() {
+/*
+    다시 스캔
+*/
 
-    const barcode =
-        document.getElementById("barcode").value.trim();
-
-    if (!barcode) {
-
-        alert("바코드를 먼저 스캔해주세요.");
-
-        return;
-    }
-
-    document.getElementById("result").innerHTML = `
-
-        <div class="card">
-
-            <div class="row">
-                <div class="label">바코드</div>
-                <div class="value">
-                    ${barcode}
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="label">부품번호</div>
-                <div class="value">
-                    데이터 연결 예정
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="label">부품명</div>
-                <div class="value">
-                    데이터 연결 예정
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="label">현재고</div>
-                <div class="value">
-                    데이터 연결 예정
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="label">현재 로케이션</div>
-                <div class="value">
-                    데이터 연결 예정
-                </div>
-            </div>
-
-            <hr>
-
-            <div class="label">
-                새 로케이션
-            </div>
-
-            <input
-                id="newLocation"
-                type="text"
-                placeholder="예: A-03-02"
-            >
-
-            <button onclick="changeLocation()">
-                로케이션 변경
-            </button>
-
-        </div>
-
-    `;
-}
+function restartScanner() {
 
 
-function changeLocation() {
+    document
+        .getElementById("result")
+        .classList.add("hidden");
 
-    const location =
-        document.getElementById("newLocation").value.trim();
 
-    if (!location) {
+    lastResult = "";
 
-        alert("새 로케이션을 입력해주세요.");
 
-        return;
-    }
-
-    alert(
-        "새 로케이션: " + location
-    );
+    startScanner();
 
 }
+
+
+/*
+    카메라 기능 확인
+
+    지원되는 휴대폰에서는
+    줌/플래시 버튼을 추가할 수 있음
+*/
+
+function addCameraControls() {
+
+
+    try {
+
+
+        const capabilities =
+            scanner.getRunningTrackCameraCapabilities();
+
+
+        console.log(
+            "Camera capabilities:",
+            capabilities
+        );
+
+
+    }
+
+    catch(error) {
+
+        console.log(
+            "카메라 기능 확인 실패",
+            error
+        );
+
+    }
+
+}
+
 
 </script>
 
 </body>
+
 </html>
