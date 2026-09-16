@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>부품 재고 조회</title>
+
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
 <style>
 body {
@@ -43,6 +46,14 @@ input {
     font-size: 18px;
 }
 
+#reader {
+    width: 100%;
+    margin-top: 20px;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
 .card {
     background: white;
     padding: 20px;
@@ -65,6 +76,7 @@ input {
     margin-top: 3px;
 }
 </style>
+
 </head>
 
 <body>
@@ -73,46 +85,90 @@ input {
 
 <h1>부품 재고 조회</h1>
 
-<button onclick="scanBarcode()">📷 바코드 스캔</button>
+<button onclick="startScanner()">
+📷 바코드 스캔
+</button>
+
+<div id="reader"></div>
 
 <input
     id="barcode"
     type="text"
-    placeholder="바코드를 직접 입력할 수도 있습니다"
+    placeholder="바코드 번호"
 >
 
-<button onclick="searchPart()">부품 조회</button>
+<button onclick="searchPart()">
+부품 조회
+</button>
 
 <div id="result"></div>
 
 </div>
 
+
 <script>
 
-function scanBarcode() {
+let scanner = null;
 
-    if (!("BarcodeDetector" in window)) {
-        alert("이 브라우저에서는 카메라 바코드 스캔을 지원하지 않습니다.");
+
+/* 바코드 스캐너 시작 */
+
+function startScanner() {
+
+    if (scanner) {
         return;
     }
 
-    navigator.mediaDevices.getUserMedia({
-        video: {
+    scanner = new Html5Qrcode("reader");
+
+    scanner.start(
+        {
             facingMode: "environment"
+        },
+
+        {
+            fps: 10,
+            qrbox: {
+                width: 300,
+                height: 150
+            }
+        },
+
+        function(decodedText) {
+
+            document.getElementById("barcode").value = decodedText;
+
+            scanner.stop().then(function() {
+
+                document.getElementById("reader").innerHTML = "";
+
+                scanner = null;
+
+                searchPart();
+
+            });
+
+        },
+
+        function(errorMessage) {
+            // 스캔 중 오류는 무시
         }
-    }).then(stream => {
 
-        alert("카메라가 실행되었습니다.");
+    ).catch(function(error) {
 
-        stream.getTracks().forEach(track => track.stop());
+        alert(
+            "카메라를 사용할 수 없습니다.\n\n" +
+            "휴대폰 설정에서 카메라 권한을 허용해주세요."
+        );
 
-    }).catch(error => {
-
-        alert("카메라 권한을 허용해주세요.");
+        scanner = null;
 
     });
+
 }
 
+
+/* 부품 조회 */
 
 function searchPart() {
 
@@ -120,50 +176,96 @@ function searchPart() {
         document.getElementById("barcode").value.trim();
 
     if (!barcode) {
-        alert("바코드를 입력해주세요.");
+
+        alert("바코드를 먼저 스캔해주세요.");
+
         return;
     }
+
 
     document.getElementById("result").innerHTML = `
 
         <div class="card">
 
             <div class="row">
-                <div class="label">바코드</div>
-                <div class="value">${barcode}</div>
+
+                <div class="label">
+                    바코드
+                </div>
+
+                <div class="value">
+                    ${barcode}
+                </div>
+
             </div>
 
-            <div class="row">
-                <div class="label">부품번호</div>
-                <div class="value">-</div>
-            </div>
 
             <div class="row">
-                <div class="label">부품명</div>
-                <div class="value">-</div>
+
+                <div class="label">
+                    부품번호
+                </div>
+
+                <div class="value">
+                    아직 데이터 연결 전
+                </div>
+
             </div>
 
-            <div class="row">
-                <div class="label">현재고</div>
-                <div class="value">-</div>
-            </div>
 
             <div class="row">
-                <div class="label">현재 로케이션</div>
-                <div class="value">-</div>
+
+                <div class="label">
+                    부품명
+                </div>
+
+                <div class="value">
+                    아직 데이터 연결 전
+                </div>
+
             </div>
+
+
+            <div class="row">
+
+                <div class="label">
+                    현재고
+                </div>
+
+                <div class="value">
+                    아직 데이터 연결 전
+                </div>
+
+            </div>
+
+
+            <div class="row">
+
+                <div class="label">
+                    현재 로케이션
+                </div>
+
+                <div class="value">
+                    아직 데이터 연결 전
+                </div>
+
+            </div>
+
 
             <hr>
+
 
             <div class="label">
                 새 로케이션
             </div>
+
 
             <input
                 id="newLocation"
                 type="text"
                 placeholder="예: A-03-02"
             >
+
 
             <button onclick="changeLocation()">
                 로케이션 변경
@@ -172,22 +274,31 @@ function searchPart() {
         </div>
 
     `;
+
 }
 
+
+/* 로케이션 변경 */
 
 function changeLocation() {
 
     const location =
         document.getElementById("newLocation").value.trim();
 
+
     if (!location) {
+
         alert("새 로케이션을 입력해주세요.");
+
         return;
     }
 
+
     alert(
-        "로케이션 변경 요청: " + location
+        "새 로케이션: " + location +
+        "\n\n다음 단계에서 실제 저장 기능을 연결합니다."
     );
+
 }
 
 </script>
