@@ -1,130 +1,2207 @@
+```html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+
 <meta name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+      content="width=device-width,
+               initial-scale=1.0,
+               maximum-scale=1.0,
+               user-scalable=no">
 
-<title>부품 입고 스캐너</title>
+<title>부품 재고 조회</title>
 
-<!-- ZXing 바코드 스캐너 -->
-<script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
+<!-- ZXing : 바코드 -->
+<script src="https://unpkg.com/@zxing/browser@0.1.5"></script>
 
-<!-- Tesseract OCR -->
+<!-- Tesseract : Quantity OCR -->
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
-    * {
-        box-sizing: border-box;
+
+*{
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
+}
+
+body{
+    margin:0;
+    background:#f4f4f4;
+    color:#111;
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Noto Sans KR",
+        Arial,
+        sans-serif;
+}
+
+.container{
+    width:100%;
+    max-width:760px;
+    margin:0 auto;
+    padding:18px 12px 50px;
+}
+
+h1{
+    text-align:center;
+    font-size:34px;
+    margin:22px 0 28px;
+    font-weight:800;
+}
+
+button{
+    border:0;
+    border-radius:14px;
+    font-size:18px;
+    font-weight:700;
+    cursor:pointer;
+    touch-action:manipulation;
+}
+
+.main-button{
+    width:100%;
+    height:68px;
+    background:#222;
+    color:#fff;
+    margin-bottom:16px;
+}
+
+#cameraBox{
+    display:none;
+    position:relative;
+    background:#000;
+    border-radius:20px;
+    overflow:hidden;
+}
+
+#video{
+    width:100%;
+    height:430px;
+    display:block;
+    object-fit:cover;
+    background:#000;
+}
+
+.barcode-guide{
+    position:absolute;
+    left:4%;
+    right:4%;
+    top:42%;
+    height:110px;
+    transform:translateY(-50%);
+    border:3px solid #fff;
+    border-radius:12px;
+    box-shadow:0 0 0 9999px rgba(0,0,0,.35);
+    z-index:10;
+    pointer-events:none;
+}
+
+.barcode-guide::after{
+    content:"바코드를 이 안에 크게 맞춰주세요";
+    position:absolute;
+    top:-34px;
+    left:0;
+    right:0;
+    text-align:center;
+    color:#fff;
+    font-size:14px;
+    font-weight:700;
+    text-shadow:0 2px 5px #000;
+}
+
+.quantity-guide{
+    position:absolute;
+    left:4%;
+    right:4%;
+    top:73%;
+    height:65px;
+    transform:translateY(-50%);
+    border:2px solid #ffd60a;
+    border-radius:10px;
+    z-index:10;
+    pointer-events:none;
+}
+
+.quantity-guide::after{
+    content:"Quantity 영역";
+    position:absolute;
+    left:0;
+    right:0;
+    top:-25px;
+    text-align:center;
+    color:#ffd60a;
+    font-size:12px;
+    font-weight:700;
+    text-shadow:0 2px 4px #000;
+}
+
+#cameraStatus{
+    position:absolute;
+    left:50%;
+    top:16px;
+    transform:translateX(-50%);
+    z-index:20;
+    padding:8px 14px;
+    background:rgba(0,0,0,.65);
+    color:#fff;
+    border-radius:20px;
+    white-space:nowrap;
+    font-size:13px;
+    font-weight:700;
+}
+
+.camera-help{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:70px;
+    text-align:center;
+    color:#fff;
+    font-size:13px;
+    font-weight:600;
+    z-index:20;
+    text-shadow:0 2px 5px #000;
+}
+
+.camera-controls{
+    display:flex;
+    gap:8px;
+    padding:10px;
+    background:#111;
+}
+
+.camera-controls button{
+    flex:1;
+    height:48px;
+    background:#333;
+    color:#fff;
+    font-size:15px;
+}
+
+.close-button{
+    width:100%;
+    height:55px;
+    margin-top:10px;
+    background:#e5e5e5;
+    color:#111;
+}
+
+.status{
+    min-height:24px;
+    margin:12px 0;
+    text-align:center;
+    font-size:16px;
+}
+
+.success{
+    color:#16833b;
+    font-weight:700;
+}
+
+.warning{
+    color:#996600;
+    font-weight:700;
+}
+
+.error{
+    color:#d93025;
+    font-weight:700;
+}
+
+.debug{
+    display:none;
+    background:#fff;
+    border-radius:14px;
+    padding:14px;
+    margin-top:12px;
+    box-shadow:0 2px 10px rgba(0,0,0,.05);
+}
+
+.debug-title{
+    color:#777;
+    font-size:13px;
+    margin-bottom:5px;
+}
+
+.debug-value{
+    font-size:18px;
+    font-weight:800;
+    word-break:break-all;
+}
+
+.result{
+    background:#fff;
+    border-radius:18px;
+    padding:20px;
+    margin-top:16px;
+    box-shadow:0 3px 15px rgba(0,0,0,.08);
+}
+
+.row{
+    padding:15px 0;
+    border-bottom:1px solid #eee;
+}
+
+.row:last-child{
+    border-bottom:0;
+}
+
+.label{
+    color:#777;
+    font-size:14px;
+    margin-bottom:6px;
+}
+
+.value{
+    font-size:24px;
+    font-weight:800;
+    word-break:break-all;
+}
+
+.manual{
+    display:none;
+    margin-top:18px;
+}
+
+.manual input{
+    width:100%;
+    height:55px;
+    border:1px solid #ccc;
+    border-radius:12px;
+    padding:0 15px;
+    font-size:18px;
+    background:#fff;
+}
+
+.manual button{
+    width:100%;
+    height:55px;
+    margin-top:10px;
+    background:#222;
+    color:#fff;
+}
+
+#loading{
+    display:none;
+    text-align:center;
+    padding:25px;
+}
+
+@media(max-width:600px){
+
+    .container{
+        padding:15px 10px 40px;
     }
 
-    body {
-        margin: 0;
-        background: #111;
-        color: white;
-        font-family: Arial, sans-serif;
+    h1{
+        font-size:31px;
     }
 
-    .container {
-        width: 100%;
-        max-width: 600px;
-        margin: auto;
-        padding: 15px;
+    #video{
+        height:430px;
     }
 
-    h1 {
-        text-align: center;
-        font-size: 24px;
-        margin: 10px 0 20px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>부품 재고 조회</h1>
+
+<button
+    id="startButton"
+    class="main-button"
+    onclick="startScan()">
+
+    📷 부품 스캔
+
+</button>
+
+
+<div id="cameraBox">
+
+    <video
+        id="video"
+        autoplay
+        muted
+        playsinline>
+    </video>
+
+    <!-- 바코드 영역 -->
+    <div class="barcode-guide"></div>
+
+    <!-- Quantity 영역 -->
+    <div class="quantity-guide"></div>
+
+    <div id="cameraStatus">
+        카메라 준비 중...
+    </div>
+
+    <div class="camera-help">
+
+        ① 바코드가 흰색 박스
+        ② Quantity가 노란색 박스
+
+    </div>
+
+    <div class="camera-controls">
+
+        <button onclick="zoomOut()">
+            − 줌
+        </button>
+
+        <button onclick="toggleTorch()">
+            🔦 조명
+        </button>
+
+        <button onclick="zoomIn()">
+            ＋ 줌
+        </button>
+
+    </div>
+
+    <button
+        class="close-button"
+        onclick="stopScan()">
+
+        스캔 종료
+
+    </button>
+
+</div>
+
+
+<div
+    id="status"
+    class="status">
+</div>
+
+
+<!-- 디버그 -->
+<div
+    id="barcodeDebug"
+    class="debug">
+
+    <div class="debug-title">
+        바코드 원본
+    </div>
+
+    <div
+        id="barcodeRaw"
+        class="debug-value">
+    </div>
+
+</div>
+
+
+<div
+    id="quantityDebug"
+    class="debug">
+
+    <div class="debug-title">
+        OCR Quantity 원본
+    </div>
+
+    <div
+        id="quantityRaw"
+        class="debug-value">
+    </div>
+
+</div>
+
+
+<!-- 최종 결과 -->
+<div
+    id="result"
+    style="display:none">
+
+    <div class="result">
+
+        <div class="row">
+
+            <div class="label">
+                Material No.
+            </div>
+
+            <div
+                id="materialResult"
+                class="value">
+            </div>
+
+        </div>
+
+
+        <div class="row">
+
+            <div class="label">
+                Quantity
+            </div>
+
+            <div
+                id="quantityResult"
+                class="value">
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- 수동 -->
+<div
+    id="manualBox"
+    class="manual">
+
+    <input
+        id="manualMaterial"
+        type="text"
+        inputmode="numeric"
+        placeholder="Material No. 11자리">
+
+    <input
+        id="manualQuantity"
+        type="number"
+        min="1"
+        inputmode="numeric"
+        placeholder="Quantity">
+
+    <button onclick="manualSearch()">
+
+        조회
+
+    </button>
+
+</div>
+
+
+<div
+    id="loading">
+
+    🔍 정보를 확인하는 중...
+
+</div>
+
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   기본 설정
+========================================================= */
+
+const MATERIAL_LENGTH = 11;
+
+/*
+ * 바코드 같은 값 확인 횟수
+ */
+const BARCODE_CONFIRM_COUNT = 2;
+
+/*
+ * Quantity OCR 같은 값 확인 횟수
+ */
+const QUANTITY_CONFIRM_COUNT = 2;
+
+
+/* =========================================================
+   상태
+========================================================= */
+
+let codeReader = null;
+let decodeControls = null;
+
+let scanning = false;
+
+let currentTrack = null;
+
+let currentZoom = 1;
+let minZoom = 1;
+let maxZoom = 1;
+
+let torchOn = false;
+
+
+/*
+ * Material 후보
+ */
+let barcodeCandidate = "";
+let barcodeCount = 0;
+
+
+/*
+ * 최종 Material No.
+ */
+let materialNo = "";
+
+
+/*
+ * Quantity
+ */
+let quantity = null;
+
+let quantityCandidate = null;
+let quantityCount = 0;
+
+
+/*
+ * OCR
+ */
+let ocrWorker = null;
+let ocrReady = false;
+let ocrRunning = false;
+
+let quantityTimer = null;
+
+
+/* =========================================================
+   상태
+========================================================= */
+
+function setStatus(text,type=""){
+
+    const el =
+        document.getElementById("status");
+
+    el.textContent = text;
+
+    el.className = "status";
+
+    if(type){
+        el.classList.add(type);
     }
 
-    .camera-box {
-        position: relative;
-        width: 100%;
-        background: #000;
-        border-radius: 14px;
-        overflow: hidden;
+}
+
+
+/* =========================================================
+   숫자 정리
+========================================================= */
+
+function cleanDigits(text){
+
+    if(
+        text === null ||
+        text === undefined
+    ){
+        return "";
     }
 
-    video {
-        width: 100%;
-        display: block;
-        min-height: 280px;
-        object-fit: cover;
+    return String(text)
+        .replace(
+            /O/gi,"0"
+        )
+        .replace(
+            /I/gi,"1"
+        )
+        .replace(
+            /L/gi,"1"
+        )
+        .replace(
+            /S/gi,"5"
+        )
+        .replace(
+            /B/gi,"8"
+        )
+        .replace(
+            /Z/gi,"2"
+        )
+        .replace(
+            /[^0-9]/g,""
+        );
+
+}
+
+
+/* =========================================================
+   Material No.
+========================================================= */
+
+function validMaterialNo(raw){
+
+    const value =
+        cleanDigits(raw);
+
+    /*
+     * 정확히 11자리만 허용
+     */
+    if(
+        !/^\d{11}$/.test(value)
+    ){
+        return null;
     }
 
-    /* 바코드 조준선 */
-    .barcode-guide {
-        position: absolute;
-        left: 8%;
-        right: 8%;
-        top: 35%;
-        height: 30%;
-        border: 3px solid #00ff66;
-        border-radius: 10px;
-        pointer-events: none;
+    return value;
+
+}
+
+
+/* =========================================================
+   Quantity
+========================================================= */
+
+function extractQuantity(text){
+
+    if(!text){
+        return null;
     }
 
-    .barcode-guide-text {
-        position: absolute;
-        top: calc(35% - 35px);
-        width: 100%;
-        text-align: center;
-        color: #00ff66;
-        font-weight: bold;
-        text-shadow: 0 1px 3px black;
+    /*
+     * OCR에서 Quantity라는 단어가
+     * 같이 나오는 경우를 우선 사용
+     */
+
+    const lines =
+        String(text)
+        .split(/\r?\n/)
+        .map(
+            x => x.trim()
+        )
+        .filter(
+            x => x.length
+        );
+
+
+    for(
+        const line of lines
+    ){
+
+        const lower =
+            line.toLowerCase();
+
+        /*
+         * Quantity / Qty / QTY
+         */
+        if(
+            lower.includes("quantity") ||
+            lower.includes("qty")
+        ){
+
+            /*
+             * 숫자만 찾는다.
+             *
+             * 예:
+             * Quantity 4
+             * Quantity: 4
+             */
+            const match =
+                line.match(
+                    /\d+/
+                );
+
+            if(match){
+
+                return Number(
+                    match[0]
+                );
+
+            }
+
+        }
+
     }
 
-    button {
-        width: 100%;
-        padding: 15px;
-        margin-top: 12px;
-        border: 0;
-        border-radius: 10px;
-        font-size: 17px;
-        font-weight: bold;
-        cursor: pointer;
+
+    /*
+     * Quantity라는 단어를 OCR이 놓친 경우
+     *
+     * 숫자가 한 개만 있으면 후보로 사용
+     */
+    const allNumbers =
+        String(text)
+        .match(/\d+/g) || [];
+
+
+    if(
+        allNumbers.length === 1
+    ){
+
+        return Number(
+            allNumbers[0]
+        );
+
     }
 
-    .start {
-        background: #00c853;
-        color: white;
+
+    return null;
+
+}
+
+
+/* =========================================================
+   카메라 시작
+========================================================= */
+
+async function startScan(){
+
+    if(scanning){
+        return;
     }
 
-    .stop {
-        background: #d50000;
-        color: white;
+
+    /*
+     * 상태 초기화
+     */
+
+    materialNo = "";
+
+    quantity = null;
+
+    barcodeCandidate = "";
+
+    barcodeCount = 0;
+
+    quantityCandidate = null;
+
+    quantityCount = 0;
+
+
+    document
+        .getElementById(
+            "cameraBox"
+        )
+        .style.display =
+        "block";
+
+
+    document
+        .getElementById(
+            "result"
+        )
+        .style.display =
+        "none";
+
+
+    document
+        .getElementById(
+            "barcodeDebug"
+        )
+        .style.display =
+        "none";
+
+
+    document
+        .getElementById(
+            "quantityDebug"
+        )
+        .style.display =
+        "none";
+
+
+    setStatus(
+        "카메라를 준비하고 있습니다...",
+        "warning"
+    );
+
+
+    try{
+
+        /*
+         * 후면 카메라
+         */
+
+        const devices =
+            await ZXingBrowser
+                .BrowserCodeReader
+                .listVideoInputDevices();
+
+
+        if(
+            !devices ||
+            !devices.length
+        ){
+
+            throw new Error(
+                "카메라를 찾을 수 없습니다."
+            );
+
+        }
+
+
+        /*
+         * 후면 카메라 찾기
+         */
+
+        let device =
+            devices.find(
+                d => {
+
+                    const label =
+                        String(
+                            d.label || ""
+                        ).toLowerCase();
+
+                    return(
+                        label.includes("back") ||
+                        label.includes("rear") ||
+                        label.includes("environment")
+                    );
+
+                }
+            );
+
+
+        if(!device){
+
+            device =
+                devices[
+                    devices.length - 1
+                ];
+
+        }
+
+
+        /*
+         * ZXing
+         */
+
+        codeReader =
+            new ZXingBrowser
+                .BrowserMultiFormatReader();
+
+
+        /*
+         * 영상
+         */
+
+        const video =
+            document.getElementById(
+                "video"
+            );
+
+
+        /*
+         * 바코드 연속 스캔
+         */
+
+        decodeControls =
+            await codeReader
+            .decodeFromVideoDevice(
+
+                device.deviceId,
+
+                video,
+
+                function(
+                    result,
+                    error
+                ){
+
+                    if(result){
+
+                        processBarcode(
+                            result
+                        );
+
+                    }
+
+                }
+
+            );
+
+
+        scanning = true;
+
+
+        /*
+         * 카메라 트랙
+         */
+
+        setTimeout(
+            setupCamera,
+            700
+        );
+
+
+        document
+            .getElementById(
+                "cameraStatus"
+            )
+            .textContent =
+            "바코드 인식 중...";
+
+
+        setStatus(
+            "먼저 바코드를 맞춰주세요.",
+            "warning"
+        );
+
+
+    }catch(error){
+
+        console.error(
+            error
+        );
+
+
+        setStatus(
+            "카메라를 시작할 수 없습니다.",
+            "error"
+        );
+
+
+        document
+            .getElementById(
+                "manualBox"
+            )
+            .style.display =
+            "block";
+
     }
 
-    .capture {
-        background: #2979ff;
-        color: white;
+}
+
+
+/* =========================================================
+   바코드 처리
+========================================================= */
+
+function processBarcode(result){
+
+    if(!scanning){
+        return;
     }
 
-    .result {
-        margin-top: 18px;
-        background: #1e1e1e;
-        border-radius: 12px;
-        padding: 18px;
+
+    let raw = "";
+
+    try{
+
+        raw =
+            result.getText();
+
+    }catch(e){
+
+        raw =
+            result.text || "";
+
     }
 
-    .label {
-        color: #aaa;
-        font-size: 14px;
-        margin-bottom: 5px;
+
+    if(!raw){
+        return;
     }
 
-    .value {
-        font-size: 25px;
-        font-weight: bold;
-        word-break: break-all;
-        margin-bottom: 15px;
+
+    /*
+     * 원본 표시
+     */
+
+    document
+        .getElementById(
+            "barcodeDebug"
+        )
+        .style.display =
+        "block";
+
+
+    document
+        .getElementById(
+            "barcodeRaw"
+        )
+        .textContent =
+        raw;
+
+
+    /*
+     * Material No. 확인
+     */
+
+    const valid =
+        validMaterialNo(
+            raw
+        );
+
+
+    /*
+     * 정확히 11자리 아니면
+     * 절대 확정하지 않는다.
+     */
+
+    if(!valid){
+
+        document
+            .getElementById(
+                "cameraStatus"
+            )
+            .textContent =
+            "바코드는 읽었지만 11자리 번호가 아닙니다.";
+
+        return;
+
     }
 
-    input {
-        width: 100%;
-        padding: 14px;
-        border-radius: 8px;
-        border: 1px solid #555;
-        background: #111;
-        colo
+
+    /*
+     * 동일값 확인
+     */
+
+    if(
+        valid ===
+        barcodeCandidate
+    ){
+
+        barcodeCount++;
+
+    }else{
+
+        barcodeCandidate =
+            valid;
+
+        barcodeCount = 1;
+
+    }
+
+
+    document
+        .getElementById(
+            "cameraStatus"
+        )
+        .textContent =
+
+        "Material No. 확인 " +
+
+        Math.min(
+            barcodeCount,
+            BARCODE_CONFIRM_COUNT
+        ) +
+
+        "/" +
+
+        BARCODE_CONFIRM_COUNT;
+
+
+    /*
+     * 확정
+     */
+
+    if(
+        barcodeCount >=
+        BARCODE_CONFIRM_COUNT
+    ){
+
+        materialNo =
+            valid;
+
+
+        /*
+         * Quantity OCR 시작
+         */
+
+        document
+            .getElementById(
+                "cameraStatus"
+            )
+            .textContent =
+            "바코드 완료 → Quantity 읽는 중";
+
+
+        setStatus(
+            "✅ Material No. " +
+            materialNo +
+            " / Quantity를 읽는 중...",
+            "success"
+        );
+
+
+        startQuantityOCR();
+
+    }
+
+}
+
+
+/* =========================================================
+   Quantity OCR 준비
+========================================================= */
+
+async function prepareOCR(){
+
+    if(ocrReady){
+        return;
+    }
+
+
+    if(
+        typeof Tesseract ===
+        "undefined"
+    ){
+
+        throw new Error(
+            "OCR 엔진을 불러오지 못했습니다."
+        );
+
+    }
+
+
+    setStatus(
+        "Quantity OCR을 준비하고 있습니다...",
+        "warning"
+    );
+
+
+    ocrWorker =
+        await Tesseract.createWorker(
+            "eng"
+        );
+
+
+    await ocrWorker.setParameters({
+
+        tessedit_pageseg_mode:"7",
+
+        tessedit_char_whitelist:
+            "0123456789",
+
+        preserve_interword_spaces:"1"
+
+    });
+
+
+    ocrReady = true;
+
+}
+
+
+/* =========================================================
+   Quantity OCR 시작
+========================================================= */
+
+async function startQuantityOCR(){
+
+    if(
+        ocrRunning
+    ){
+
+        return;
+
+    }
+
+
+    try{
+
+        await prepareOCR();
+
+    }catch(error){
+
+        console.error(
+            error
+        );
+
+        setStatus(
+            "Quantity OCR을 시작하지 못했습니다.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    ocrRunning = true;
+
+
+    /*
+     * 바코드가 이미 확정됐으므로
+     * 같은 카메라 화면에서 Quantity를 읽는다.
+     */
+
+    runQuantityOCR();
+
+}
+
+
+/* =========================================================
+   Quantity OCR 반복
+========================================================= */
+
+function runQuantityOCR(){
+
+    if(
+        !scanning ||
+        !materialNo
+    ){
+
+        return;
+
+    }
+
+
+    clearTimeout(
+        quantityTimer
+    );
+
+
+    quantityTimer =
+        setTimeout(
+            async function(){
+
+                if(
+                    !scanning ||
+                    !materialNo
+                ){
+
+                    return;
+
+                }
+
+
+                if(
+                    ocrRunning &&
+                    ocrWorker
+                ){
+
+                    try{
+
+                        await readQuantity();
+
+                    }catch(error){
+
+                        console.log(
+                            "Quantity OCR:",
+                            error
+                        );
+
+                    }
+
+                }
+
+
+                runQuantityOCR();
+
+            },
+            1400
+        );
+
+}
+
+
+/* =========================================================
+   Quantity 이미지
+========================================================= */
+
+function captureQuantityImage(){
+
+    const video =
+        document.getElementById(
+            "video"
+        );
+
+
+    if(
+        !video ||
+        video.readyState < 2
+    ){
+
+        return null;
+
+    }
+
+
+    const w =
+        video.videoWidth;
+
+    const h =
+        video.videoHeight;
+
+
+    if(!w || !h){
+        return null;
+    }
+
+
+    /*
+     * 화면 아래쪽의 Quantity 영역
+     *
+     * 노란색 가이드 위치와 맞춘다.
+     */
+
+    const sx =
+        Math.round(
+            w * .04
+        );
+
+    const sy =
+        Math.round(
+            h * .67
+        );
+
+    const sw =
+        Math.round(
+            w * .92
+        );
+
+    const sh =
+        Math.round(
+            h * .12
+        );
+
+
+    /*
+     * 크게 확대
+     */
+
+    const scale = 3;
+
+
+    const canvas =
+        document.createElement(
+            "canvas"
+        );
+
+
+    canvas.width =
+        sw * scale;
+
+    canvas.height =
+        sh * scale;
+
+
+    const ctx =
+        canvas.getContext(
+            "2d",
+            {
+                willReadFrequently:true
+            }
+        );
+
+
+    /*
+     * 흑백 대비를 위해
+     * 먼저 영상 확대
+     */
+
+    ctx.drawImage(
+        video,
+        sx,
+        sy,
+        sw,
+        sh,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    /*
+     * 흑백 + 대비 강화
+     */
+
+    const image =
+        ctx.getImageData(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+
+    const data =
+        image.data;
+
+
+    for(
+        let i=0;
+        i<data.length;
+        i+=4
+    ){
+
+        const r =
+            data[i];
+
+        const g =
+            data[i+1];
+
+        const b =
+            data[i+2];
+
+
+        let gray =
+            (0.299*r) +
+            (0.587*g) +
+            (0.114*b);
+
+
+        /*
+         * 대비 강화
+         */
+
+        gray =
+            (gray - 128) * 2 + 128;
+
+
+        gray =
+            Math.max(
+                0,
+                Math.min(
+                    255,
+                    gray
+                )
+            );
+
+
+        data[i] =
+            gray;
+
+        data[i+1] =
+            gray;
+
+        data[i+2] =
+            gray;
+
+    }
+
+
+    ctx.putImageData(
+        image,
+        0,
+        0
+    );
+
+
+    return canvas;
+
+}
+
+
+/* =========================================================
+   Quantity 읽기
+========================================================= */
+
+async function readQuantity(){
+
+    if(
+        !ocrWorker ||
+        !materialNo
+    ){
+
+        return;
+
+    }
+
+
+    const canvas =
+        captureQuantityImage();
+
+
+    if(!canvas){
+        return;
+    }
+
+
+    /*
+     * OCR 실행
+     */
+
+    const result =
+        await ocrWorker.recognize(
+            canvas
+        );
+
+
+    const text =
+        result &&
+        result.data
+            ? result.data.text
+            : "";
+
+
+    /*
+     * 원본 OCR 표시
+     */
+
+    document
+        .getElementById(
+            "quantityDebug"
+        )
+        .style.display =
+        "block";
+
+
+    document
+        .getElementById(
+            "quantityRaw"
+        )
+        .textContent =
+        text ||
+        "(인식 안됨)";
+
+
+    /*
+     * Quantity 추출
+     */
+
+    const value =
+        extractQuantity(
+            text
+        );
+
+
+    if(
+        value === null ||
+        !Number.isFinite(value) ||
+        value < 1
+    ){
+
+        document
+            .getElementById(
+                "cameraStatus"
+            )
+            .textContent =
+            "Quantity를 찾는 중...";
+
+        return;
+
+    }
+
+
+    /*
+     * Quantity 후보 확인
+     */
+
+    if(
+        value ===
+        quantityCandidate
+    ){
+
+        quantityCount++;
+
+    }else{
+
+        quantityCandidate =
+            value;
+
+        quantityCount =
+            1;
+
+    }
+
+
+    document
+        .getElementById(
+            "cameraStatus"
+        )
+        .textContent =
+
+        "Quantity 확인 " +
+
+        Math.min(
+            quantityCount,
+            QUANTITY_CONFIRM_COUNT
+        ) +
+
+        "/" +
+
+        QUANTITY_CONFIRM_COUNT;
+
+
+    /*
+     * 2번 같은 값이면 확정
+     */
+
+    if(
+        quantityCount >=
+        QUANTITY_CONFIRM_COUNT
+    ){
+
+        quantity =
+            value;
+
+
+        finishScan();
+
+    }
+
+}
+
+
+/* =========================================================
+   최종 완료
+========================================================= */
+
+function finishScan(){
+
+    scanning =
+        false;
+
+
+    ocrRunning =
+        false;
+
+
+    clearTimeout(
+        quantityTimer
+    );
+
+
+    /*
+     * 카메라 종료
+     */
+
+    stopCameraOnly();
+
+
+    /*
+     * 결과 표시
+     */
+
+    document
+        .getElementById(
+            "materialResult"
+        )
+        .textContent =
+        materialNo;
+
+
+    document
+        .getElementById(
+            "quantityResult"
+        )
+        .textContent =
+        quantity;
+
+
+    document
+        .getElementById(
+            "result"
+        )
+        .style.display =
+        "block";
+
+
+    setStatus(
+        "✅ Material No. + Quantity 인식 완료",
+        "success"
+    );
+
+}
+
+
+/* =========================================================
+   카메라 설정
+========================================================= */
+
+function setupCamera(){
+
+    const video =
+        document.getElementById(
+            "video"
+        );
+
+
+    if(
+        !video ||
+        !video.srcObject
+    ){
+
+        return;
+
+    }
+
+
+    try{
+
+        const tracks =
+            video
+                .srcObject
+                .getVideoTracks();
+
+
+        if(
+            !tracks ||
+            !tracks.length
+        ){
+
+            return;
+
+        }
+
+
+        currentTrack =
+            tracks[0];
+
+
+        const caps =
+            currentTrack.getCapabilities
+                ? currentTrack.getCapabilities()
+                : {};
+
+
+        if(caps.zoom){
+
+            minZoom =
+                caps.zoom.min || 1;
+
+            maxZoom =
+                caps.zoom.max || 1;
+
+
+            currentZoom =
+                Math.min(
+                    Math.max(
+                        1.3,
+                        minZoom
+                    ),
+                    maxZoom
+                );
+
+
+            applyZoom();
+
+        }
+
+
+        if(
+            caps.focusMode &&
+            caps.focusMode.includes(
+                "continuous"
+            )
+        ){
+
+            currentTrack
+                .applyConstraints({
+
+                    advanced:[
+                        {
+                            focusMode:
+                                "continuous"
+                        }
+                    ]
+
+                })
+                .catch(
+                    () => {}
+                );
+
+        }
+
+    }catch(error){
+
+        console.log(
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   줌 +
+========================================================= */
+
+async function zoomIn(){
+
+    if(
+        !currentTrack ||
+        maxZoom <= minZoom
+    ){
+
+        return;
+
+    }
+
+
+    currentZoom =
+        Math.min(
+            currentZoom + .5,
+            maxZoom
+        );
+
+
+    await applyZoom();
+
+}
+
+
+/* =========================================================
+   줌 -
+========================================================= */
+
+async function zoomOut(){
+
+    if(
+        !currentTrack ||
+        maxZoom <= minZoom
+    ){
+
+        return;
+
+    }
+
+
+    currentZoom =
+        Math.max(
+            currentZoom - .5,
+            minZoom
+        );
+
+
+    await applyZoom();
+
+}
+
+
+/* =========================================================
+   줌 적용
+========================================================= */
+
+async function applyZoom(){
+
+    if(!currentTrack){
+        return;
+    }
+
+
+    try{
+
+        await currentTrack
+            .applyConstraints({
+
+                advanced:[
+                    {
+                        zoom:
+                            currentZoom
+                    }
+                ]
+
+            });
+
+    }catch(e){
+
+        console.log(
+            e
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   조명
+========================================================= */
+
+async function toggleTorch(){
+
+    if(!currentTrack){
+        return;
+    }
+
+
+    try{
+
+        const caps =
+            currentTrack.getCapabilities
+                ? currentTrack.getCapabilities()
+                : {};
+
+
+        if(!caps.torch){
+
+            setStatus(
+                "이 휴대폰에서는 웹 조명을 지원하지 않습니다.",
+                "warning"
+            );
+
+            return;
+
+        }
+
+
+        torchOn =
+            !torchOn;
+
+
+        await currentTrack
+            .applyConstraints({
+
+                advanced:[
+                    {
+                        torch:
+                            torchOn
+                    }
+                ]
+
+            });
+
+    }catch(e){
+
+        console.log(
+            e
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   카메라만 종료
+========================================================= */
+
+function stopCameraOnly(){
+
+    try{
+
+        if(decodeControls){
+
+            decodeControls.stop();
+
+        }
+
+    }catch(e){}
+
+
+    try{
+
+        if(codeReader){
+
+            codeReader.reset();
+
+        }
+
+    }catch(e){}
+
+
+    try{
+
+        if(
+            currentTrack
+        ){
+
+            currentTrack.stop();
+
+        }
+
+    }catch(e){}
+
+
+    try{
+
+        const video =
+            document.getElementById(
+                "video"
+            );
+
+
+        if(video){
+
+            if(video.srcObject){
+
+                video.srcObject
+                    .getTracks()
+                    .forEach(
+                        track =>
+                            track.stop()
+                    );
+
+            }
+
+            video.pause();
+
+            video.srcObject =
+                null;
+
+        }
+
+    }catch(e){}
+
+
+    currentTrack =
+        null;
+
+
+    decodeControls =
+        null;
+
+
+    codeReader =
+        null;
+
+
+    document
+        .getElementById(
+            "cameraBox"
+        )
+        .style.display =
+        "none";
+
+}
+
+
+/* =========================================================
+   전체 종료
+========================================================= */
+
+function stopScan(){
+
+    scanning = false;
+
+    ocrRunning = false;
+
+
+    clearTimeout(
+        quantityTimer
+    );
+
+
+    stopCameraOnly();
+
+
+    resetCandidate();
+
+}
+
+
+/* =========================================================
+   후보 초기화
+========================================================= */
+
+function resetCandidate(){
+
+    barcodeCandidate = "";
+
+    barcodeCount = 0;
+
+    quantityCandidate = null;
+
+    quantityCount = 0;
+
+}
+
+
+/* =========================================================
+   수동 입력
+========================================================= */
+
+function manualSearch(){
+
+    const mat =
+        document
+            .getElementById(
+                "manualMaterial"
+            )
+            .value
+            .trim();
+
+
+    const qty =
+        document
+            .getElementById(
+                "manualQuantity"
+            )
+            .value
+            .trim();
+
+
+    const validMat =
+        validMaterialNo(
+            mat
+        );
+
+
+    if(!validMat){
+
+        setStatus(
+            "Material No.는 11자리 숫자여야 합니다.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    if(
+        !qty ||
+        Number(qty) < 1
+    ){
+
+        setStatus(
+            "Quantity를 입력해주세요.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    materialNo =
+        validMat;
+
+    quantity =
+        Number(qty);
+
+
+    document
+        .getElementById(
+            "materialResult"
+        )
+        .textContent =
+        materialNo;
+
+
+    document
+        .getElementById(
+            "quantityResult"
+        )
+        .textContent =
+        quantity;
+
+
+    document
+        .getElementById(
+            "result"
+        )
+        .style.display =
+        "block";
+
+
+    setStatus(
+        "✅ 입력 완료",
+        "success"
+    );
+
+}
+
+
+/* =========================================================
+   페이지 종료
+========================================================= */
+
+window.addEventListener(
+    "beforeunload",
+    async function(){
+
+        stopScan();
+
+
+        try{
+
+            if(ocrWorker){
+
+                await ocrWorker.terminate();
+
+            }
+
+        }catch(e){}
+
+    }
+);
+
+</script>
+
+</body>
+</html>
+```
