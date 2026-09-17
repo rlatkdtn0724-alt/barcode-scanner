@@ -13,12 +13,7 @@
 
 <title>부품 재고 조회</title>
 
-<!--
-    html5-qrcode
-    사진 파일에서 Code 39를 읽는 용도
--->
 <script src="https://unpkg.com/html5-qrcode"></script>
-
 
 <style>
 
@@ -53,346 +48,176 @@ h1{
     font-weight:800;
 }
 
-
-/* =========================================================
-   촬영 버튼
-========================================================= */
-
 .capture-button{
-
     display:flex;
-
     align-items:center;
     justify-content:center;
-
     width:100%;
-
     height:72px;
-
     border:0;
-
     border-radius:16px;
-
     background:#2563eb;
-
     color:white;
-
     font-size:21px;
-
     font-weight:800;
-
     cursor:pointer;
-
     margin-bottom:10px;
-
 }
 
 .capture-button:active{
     transform:scale(.98);
 }
 
-
-/*
- * 파일 선택 input은 숨김
- */
 #photoInput{
     display:none;
 }
 
-
-/* =========================================================
-   안내
-========================================================= */
-
 .guide{
     background:white;
-
     border-radius:15px;
-
     padding:15px;
-
     margin-top:12px;
-
     font-size:14px;
-
     line-height:1.6;
-
     color:#555;
-
-    box-shadow:
-        0 2px 10px rgba(0,0,0,.05);
+    box-shadow:0 2px 10px rgba(0,0,0,.05);
 }
 
 .guide strong{
     color:#111;
 }
 
-
-/* =========================================================
-   사진 미리보기
-========================================================= */
-
 .preview-box{
-
     display:none;
-
     margin-top:15px;
-
     background:#111;
-
     border-radius:16px;
-
     overflow:hidden;
-
 }
 
 #previewImage{
-
     display:block;
-
     width:100%;
-
     max-height:650px;
-
     object-fit:contain;
-
     background:#000;
-
 }
-
-
-/* =========================================================
-   처리 버튼
-========================================================= */
 
 #analyzeButton{
-
     display:none;
-
     width:100%;
-
     height:58px;
-
     margin-top:10px;
-
     border:0;
-
     border-radius:14px;
-
     background:#111827;
-
     color:white;
-
     font-size:18px;
-
     font-weight:800;
-
 }
 
-
-/* =========================================================
-   상태
-========================================================= */
-
 .status{
-
     min-height:24px;
-
     margin:14px 0;
-
     text-align:center;
-
     font-size:16px;
-
     line-height:1.5;
-
 }
 
 .success{
-
     color:#16833b;
-
     font-weight:700;
-
 }
 
 .warning{
-
     color:#996600;
-
     font-weight:700;
-
 }
 
 .error{
-
     color:#d93025;
-
     font-weight:700;
-
 }
-
-
-/* =========================================================
-   처리중
-========================================================= */
 
 .loading{
-
     display:none;
-
     text-align:center;
-
     padding:20px 10px;
-
     font-size:16px;
-
 }
 
-
-/* =========================================================
-   원본 결과
-========================================================= */
-
 .debug{
-
     display:none;
-
     background:white;
-
     border-radius:14px;
-
     padding:14px;
-
     margin-top:10px;
-
-    box-shadow:
-        0 2px 10px rgba(0,0,0,.05);
-
+    box-shadow:0 2px 10px rgba(0,0,0,.05);
 }
 
 .debug-title{
-
     color:#777;
-
     font-size:13px;
-
     margin-bottom:6px;
-
 }
 
 .debug-value{
-
     font-size:18px;
-
     font-weight:800;
-
     word-break:break-all;
-
 }
 
-
-/* =========================================================
-   결과
-========================================================= */
-
 .result{
-
     display:none;
-
     margin-top:15px;
-
     background:white;
-
     border-radius:18px;
-
     padding:20px;
-
-    box-shadow:
-        0 3px 15px rgba(0,0,0,.08);
-
+    box-shadow:0 3px 15px rgba(0,0,0,.08);
 }
 
 .result-row{
-
     padding:15px 0;
-
     border-bottom:1px solid #eee;
-
 }
 
 .result-row:last-child{
-
     border-bottom:0;
-
 }
 
 .result-label{
-
     color:#777;
-
     font-size:14px;
-
     margin-bottom:6px;
-
 }
 
 .result-value{
-
     font-size:25px;
-
     font-weight:800;
-
     word-break:break-all;
-
 }
-
-
-/* =========================================================
-   다시 촬영
-========================================================= */
 
 #retryButton{
-
     display:none;
-
     width:100%;
-
     height:56px;
-
     margin-top:10px;
-
     border:0;
-
     border-radius:14px;
-
     background:#e5e7eb;
-
     color:#111827;
-
     font-size:18px;
-
     font-weight:800;
-
 }
-
-
-/* =========================================================
-   모바일
-========================================================= */
 
 @media(max-width:600px){
 
     .container{
-
         padding:15px 10px 40px;
-
     }
 
     h1{
-
         font-size:30px;
-
     }
 
 }
@@ -401,18 +226,11 @@ h1{
 
 </head>
 
-
 <body>
 
 <div class="container">
 
-
 <h1>부품 재고 조회</h1>
-
-
-<!-- =====================================================
-     촬영 버튼
-====================================================== -->
 
 <label
     for="photoInput"
@@ -422,38 +240,23 @@ h1{
 
 </label>
 
-
 <input
     id="photoInput"
     type="file"
     accept="image/*"
     capture="environment">
 
-
-<!-- =====================================================
-     안내
-====================================================== -->
-
 <div class="guide">
 
     <strong>촬영 방법</strong><br>
 
-    ① 부품 태그 전체가 사진에 들어오게 촬영<br>
-
-    ② 바코드는 최대한 선명하게 찍기<br>
-
-    ③ 흔들리지 않게 잠깐 멈춘 후 촬영<br>
-
-    ④ 바코드가 너무 작으면 휴대폰을 조금 가까이 가져가기<br>
-
-    ⑤ 촬영 후 사진에서 Code 39를 자동으로 찾습니다.
+    ① 바코드가 사진에서 최대한 크게 보이게 촬영<br>
+    ② 바코드 선이 흐려지지 않게 촬영<br>
+    ③ 가능하면 바코드와 휴대폰을 수평으로 맞추기<br>
+    ④ 촬영 후 「Code 39 찾기」를 눌러주세요<br>
+    ⑤ 인식된 값에서 마지막 9자리를 부품번호로 사용합니다.
 
 </div>
-
-
-<!-- =====================================================
-     사진
-====================================================== -->
 
 <div
     id="previewBox"
@@ -465,7 +268,6 @@ h1{
 
 </div>
 
-
 <button
     id="analyzeButton"
     onclick="analyzePhoto()">
@@ -473,7 +275,6 @@ h1{
     🔎 사진에서 Code 39 찾기
 
 </button>
-
 
 <button
     id="retryButton"
@@ -483,11 +284,6 @@ h1{
 
 </button>
 
-
-<!-- =====================================================
-     상태
-====================================================== -->
-
 <div
     id="status"
     class="status">
@@ -496,19 +292,12 @@ h1{
 
 </div>
 
-
-<!-- =====================================================
-     원본
-====================================================== -->
-
 <div
     id="rawBox"
     class="debug">
 
     <div class="debug-title">
-
         Code 39 원본
-
     </div>
 
     <div
@@ -518,19 +307,12 @@ h1{
 
 </div>
 
-
-<!-- =====================================================
-     추출
-====================================================== -->
-
 <div
     id="partBox"
     class="debug">
 
     <div class="debug-title">
-
         추출된 부품번호
-
     </div>
 
     <div
@@ -540,23 +322,13 @@ h1{
 
 </div>
 
-
-<!-- =====================================================
-     로딩
-====================================================== -->
-
 <div
     id="loading"
     class="loading">
 
-    🔍 사진을 분석하고 있습니다...
+    🔍 여러 방식으로 사진을 분석하고 있습니다...
 
 </div>
-
-
-<!-- =====================================================
-     최종 결과
-====================================================== -->
 
 <div
     id="result"
@@ -565,9 +337,7 @@ h1{
     <div class="result-row">
 
         <div class="result-label">
-
             부품번호
-
         </div>
 
         <div
@@ -577,13 +347,10 @@ h1{
 
     </div>
 
-
     <div class="result-row">
 
         <div class="result-label">
-
             Quantity
-
         </div>
 
         <div
@@ -598,19 +365,11 @@ h1{
 
 </div>
 
-
 </div>
-
 
 <script>
 
-/* =========================================================
-   전역
-========================================================= */
-
 let selectedFile = null;
-
-let photoImage = null;
 
 
 /* =========================================================
@@ -625,111 +384,60 @@ document
     );
 
 
-/* =========================================================
-   사진 처리
-========================================================= */
-
 function handlePhoto(event){
 
     const file =
         event.target.files &&
         event.target.files[0];
 
-
     if(!file){
-
         return;
-
     }
 
-
-    selectedFile =
-        file;
-
-
-    /*
-     * 미리보기
-     */
+    selectedFile = file;
 
     const url =
-        URL.createObjectURL(
-            file
-        );
-
+        URL.createObjectURL(file);
 
     const image =
         document.getElementById(
             "previewImage"
         );
 
+    image.onload = function(){
 
-    image.onload =
-        function(){
+        URL.revokeObjectURL(url);
 
-            photoImage =
-                image;
+    };
 
-            URL.revokeObjectURL(
-                url
-            );
-
-        };
-
-
-    image.src =
-        url;
-
+    image.src = url;
 
     document
-        .getElementById(
-            "previewBox"
-        )
-        .style.display =
-        "block";
-
+        .getElementById("previewBox")
+        .style.display = "block";
 
     document
-        .getElementById(
-            "analyzeButton"
-        )
-        .style.display =
-        "block";
-
+        .getElementById("analyzeButton")
+        .style.display = "block";
 
     document
-        .getElementById(
-            "retryButton"
-        )
-        .style.display =
-        "none";
-
+        .getElementById("retryButton")
+        .style.display = "none";
 
     document
-        .getElementById(
-            "result"
-        )
-        .style.display =
-        "none";
-
+        .getElementById("result")
+        .style.display = "none";
 
     document
-        .getElementById(
-            "rawBox"
-        )
-        .style.display =
-        "none";
-
+        .getElementById("rawBox")
+        .style.display = "none";
 
     document
-        .getElementById(
-            "partBox"
-        )
-        .style.display =
-        "none";
-
+        .getElementById("partBox")
+        .style.display = "none";
 
     setStatus(
-        "사진 촬영 완료. 이제 Code 39를 찾아보세요.",
+        "사진 촬영 완료. Code 39를 찾아보세요.",
         "warning"
     );
 
@@ -750,114 +458,96 @@ async function analyzePhoto(){
         );
 
         return;
-
     }
 
+    document
+        .getElementById("loading")
+        .style.display = "block";
+
+    document
+        .getElementById("analyzeButton")
+        .disabled = true;
 
     setStatus(
-        "사진에서 Code 39를 찾고 있습니다...",
+        "사진을 확대하고 여러 방식으로 분석하고 있습니다...",
         "warning"
     );
 
-
-    document
-        .getElementById(
-            "loading"
-        )
-        .style.display =
-        "block";
-
-
-    document
-        .getElementById(
-            "analyzeButton"
-        )
-        .disabled =
-        true;
-
-
     try{
 
-        /*
-         * 임시 HTML5 QR 스캐너
-         *
-         * 화면에 보이지 않게 사용
-         */
-
-        const tempId =
-            "tempBarcodeReader";
-
-
-        const temp =
-            document.createElement(
-                "div"
+        const variants =
+            await createImageVariants(
+                selectedFile
             );
 
+        let result = null;
 
-        temp.id =
-            tempId;
+        for(
+            let i = 0;
+            i < variants.length;
+            i++
+        ){
 
-
-        temp.style.display =
-            "none";
-
-
-        document.body.appendChild(
-            temp
-        );
-
-
-        const scanner =
-            new Html5Qrcode(
-                tempId
+            setStatus(
+                "Code 39 분석 중... " +
+                (i + 1) +
+                " / " +
+                variants.length,
+                "warning"
             );
 
+            try{
 
-        /*
-         * 사진에서 Code 39만 읽음
-         */
+                result =
+                    await scanImage(
+                        variants[i]
+                    );
 
-        const result =
-            await scanner.scanFile(
-                selectedFile,
-                true
+                if(result){
+                    break;
+                }
+
+            }catch(e){
+
+                console.log(
+                    "분석 실패:",
+                    i,
+                    e
+                );
+
+            }
+
+        }
+
+        if(!result){
+
+            throw new Error(
+                "Code 39를 찾지 못했습니다."
             );
 
+        }
 
         console.log(
-            "Code39 photo result:",
+            "Code39 result:",
             result
         );
 
 
-        /*
-         * 원본 표시
-         */
+        /* 원본 Code39 */
 
         document
-            .getElementById(
-                "rawBox"
-            )
-            .style.display =
-            "block";
-
+            .getElementById("rawBox")
+            .style.display = "block";
 
         document
-            .getElementById(
-                "rawValue"
-            )
-            .textContent =
-            result;
+            .getElementById("rawValue")
+            .textContent = result;
 
 
-        /*
-         * 뒤 9자리
-         */
+        /* 마지막 9자리 추출 */
 
         const part =
-            extractLast9(
-                result
-            );
+            extractLast9(result);
 
 
         if(!part){
@@ -870,47 +560,27 @@ async function analyzePhoto(){
 
 
         document
-            .getElementById(
-                "partBox"
-            )
-            .style.display =
-            "block";
-
+            .getElementById("partBox")
+            .style.display = "block";
 
         document
-            .getElementById(
-                "partValue"
-            )
-            .textContent =
-            part;
+            .getElementById("partValue")
+            .textContent = part;
 
 
-        /*
-         * 최종 결과
-         */
+        /* 최종 결과 */
 
         document
-            .getElementById(
-                "materialResult"
-            )
-            .textContent =
-            part;
-
+            .getElementById("materialResult")
+            .textContent = part;
 
         document
-            .getElementById(
-                "quantityResult"
-            )
-            .textContent =
-            "-";
-
+            .getElementById("quantityResult")
+            .textContent = "-";
 
         document
-            .getElementById(
-                "result"
-            )
-            .style.display =
-            "block";
+            .getElementById("result")
+            .style.display = "block";
 
 
         setStatus(
@@ -919,62 +589,457 @@ async function analyzePhoto(){
         );
 
 
-        try{
-
-            await scanner.clear();
-
-        }catch(e){}
-
-
-        temp.remove();
-
-
-        document
-            .getElementById(
-                "retryButton"
-            )
-            .style.display =
-            "block";
-
-
     }catch(error){
 
         console.error(
-            "Photo barcode error:",
+            "Barcode error:",
             error
         );
 
-
         setStatus(
-            "사진에서 Code 39를 찾지 못했습니다. 바코드를 더 크게 또는 선명하게 촬영해주세요.",
+            "❌ Code 39를 찾지 못했습니다. 바코드를 더 크게 촬영해보세요.",
             "error"
         );
 
+    }
 
-        document
-            .getElementById(
-                "retryButton"
-            )
-            .style.display =
-            "block";
+    document
+        .getElementById("loading")
+        .style.display = "none";
+
+    document
+        .getElementById("analyzeButton")
+        .disabled = false;
+
+    document
+        .getElementById("retryButton")
+        .style.display = "block";
+
+}
+
+
+/* =========================================================
+   이미지 변형 생성
+========================================================= */
+
+async function createImageVariants(file){
+
+    const image =
+        await loadImage(file);
+
+    const variants = [];
+
+    /*
+     * 원본
+     */
+    variants.push(
+        imageToFile(
+            image,
+            1,
+            false,
+            false
+        )
+    );
+
+    /*
+     * 2배 확대
+     */
+    variants.push(
+        imageToFile(
+            image,
+            2,
+            false,
+            false
+        )
+    );
+
+    /*
+     * 3배 확대
+     */
+    variants.push(
+        imageToFile(
+            image,
+            3,
+            false,
+            false
+        )
+    );
+
+    /*
+     * 2배 확대 + 흑백
+     */
+    variants.push(
+        imageToFile(
+            image,
+            2,
+            true,
+            false
+        )
+    );
+
+    /*
+     * 3배 확대 + 흑백
+     */
+    variants.push(
+        imageToFile(
+            image,
+            3,
+            true,
+            false
+        )
+    );
+
+    /*
+     * 3배 확대 + 강한 대비
+     */
+    variants.push(
+        imageToFile(
+            image,
+            3,
+            true,
+            true
+        )
+    );
+
+    return Promise.all(
+        variants
+    );
+
+}
+
+
+/* =========================================================
+   이미지 → 파일
+========================================================= */
+
+function imageToFile(
+    image,
+    scale,
+    grayscale,
+    contrast
+){
+
+    return new Promise(
+        function(resolve){
+
+            const canvas =
+                document.createElement(
+                    "canvas"
+                );
+
+            let width =
+                image.naturalWidth;
+
+            let height =
+                image.naturalHeight;
+
+
+            /*
+             * 너무 큰 이미지는 제한
+             */
+
+            const maxSize =
+                5000;
+
+            if(
+                width * scale >
+                maxSize
+            ){
+
+                scale =
+                    maxSize /
+                    width;
+
+            }
+
+            if(
+                height * scale >
+                maxSize
+            ){
+
+                scale =
+                    Math.min(
+                        scale,
+                        maxSize /
+                        height
+                    );
+
+            }
+
+
+            canvas.width =
+                Math.round(
+                    width * scale
+                );
+
+            canvas.height =
+                Math.round(
+                    height * scale
+                );
+
+
+            const ctx =
+                canvas.getContext(
+                    "2d",
+                    {
+                        willReadFrequently:true
+                    }
+                );
+
+
+            ctx.drawImage(
+                image,
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+
+            if(
+                grayscale ||
+                contrast
+            ){
+
+                const data =
+                    ctx.getImageData(
+                        0,
+                        0,
+                        canvas.width,
+                        canvas.height
+                    );
+
+                const pixels =
+                    data.data;
+
+
+                for(
+                    let i = 0;
+                    i < pixels.length;
+                    i += 4
+                ){
+
+                    let r =
+                        pixels[i];
+
+                    let g =
+                        pixels[i + 1];
+
+                    let b =
+                        pixels[i + 2];
+
+
+                    /*
+                     * 흑백
+                     */
+
+                    if(grayscale){
+
+                        const gray =
+                            (
+                                r * 0.299 +
+                                g * 0.587 +
+                                b * 0.114
+                            );
+
+                        r = gray;
+                        g = gray;
+                        b = gray;
+
+                    }
+
+
+                    /*
+                     * 대비 증가
+                     */
+
+                    if(contrast){
+
+                        const factor =
+                            1.8;
+
+                        r =
+                            ((r - 128) *
+                            factor) + 128;
+
+                        g =
+                            ((g - 128) *
+                            factor) + 128;
+
+                        b =
+                            ((b - 128) *
+                            factor) + 128;
+
+                    }
+
+
+                    pixels[i] =
+                        clamp(r);
+
+                    pixels[i + 1] =
+                        clamp(g);
+
+                    pixels[i + 2] =
+                        clamp(b);
+
+                }
+
+
+                ctx.putImageData(
+                    data,
+                    0,
+                    0
+                );
+
+            }
+
+
+            canvas.toBlob(
+                function(blob){
+
+                    resolve(
+                        new File(
+                            [blob],
+                            "barcode.jpg",
+                            {
+                                type:"image/jpeg"
+                            }
+                        )
+                    );
+
+                },
+                "image/jpeg",
+                0.95
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   이미지 로드
+========================================================= */
+
+function loadImage(file){
+
+    return new Promise(
+        function(resolve, reject){
+
+            const url =
+                URL.createObjectURL(file);
+
+            const image =
+                new Image();
+
+            image.onload =
+                function(){
+
+                    URL.revokeObjectURL(
+                        url
+                    );
+
+                    resolve(image);
+
+                };
+
+            image.onerror =
+                reject;
+
+            image.src = url;
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   Code39 사진 스캔
+========================================================= */
+
+async function scanImage(file){
+
+    const id =
+        "barcodeReader_" +
+        Date.now();
+
+    const temp =
+        document.createElement(
+            "div"
+        );
+
+    temp.id = id;
+
+    temp.style.position =
+        "fixed";
+
+    temp.style.left =
+        "-99999px";
+
+    temp.style.top =
+        "-99999px";
+
+    temp.style.width =
+        "1px";
+
+    temp.style.height =
+        "1px";
+
+    document.body.appendChild(
+        temp
+    );
+
+
+    const scanner =
+        new Html5Qrcode(id);
+
+
+    try{
+
+        const result =
+            await scanner.scanFile(
+                file,
+                false
+            );
+
+        try{
+            await scanner.clear();
+        }catch(e){}
+
+        temp.remove();
+
+        return result;
+
+    }catch(error){
+
+        try{
+            await scanner.clear();
+        }catch(e){}
+
+        temp.remove();
+
+        return null;
 
     }
 
+}
 
-    document
-        .getElementById(
-            "loading"
+
+/* =========================================================
+   숫자 범위
+========================================================= */
+
+function clamp(value){
+
+    return Math.max(
+        0,
+        Math.min(
+            255,
+            value
         )
-        .style.display =
-        "none";
-
-
-    document
-        .getElementById(
-            "analyzeButton"
-        )
-        .disabled =
-        false;
+    );
 
 }
 
@@ -983,9 +1048,7 @@ async function analyzePhoto(){
    뒤 9자리
 ========================================================= */
 
-function extractLast9(
-    raw
-){
+function extractLast9(raw){
 
     if(
         raw === null ||
@@ -1013,7 +1076,6 @@ function extractLast9(
             ""
         );
 
-
     value =
         value.replace(
             /\*+$/,
@@ -1037,8 +1099,7 @@ function extractLast9(
      */
 
     if(
-        value.length <
-        9
+        value.length < 9
     ){
 
         return null;
@@ -1050,9 +1111,31 @@ function extractLast9(
      * 마지막 9자리
      */
 
-    return value.slice(
-        -9
-    );
+    return value.slice(-9);
+
+}
+
+
+/* =========================================================
+   상태
+========================================================= */
+
+function setStatus(
+    text,
+    type
+){
+
+    const status =
+        document.getElementById(
+            "status"
+        );
+
+    status.textContent =
+        text;
+
+    status.className =
+        "status " +
+        (type || "");
 
 }
 
@@ -1066,64 +1149,61 @@ function resetPage(){
     selectedFile =
         null;
 
-    photoImage =
-        null;
-
 
     document
         .getElementById(
             "photoInput"
         )
-        .value =
-        "";
+        .value = "";
 
 
     document
         .getElementById(
             "previewBox"
         )
-        .style.display =
-        "none";
+        .style.display = "none";
 
 
     document
         .getElementById(
             "analyzeButton"
         )
-        .style.display =
-        "none";
+        .style.display = "none";
 
 
     document
         .getElementById(
             "retryButton"
         )
-        .style.display =
-        "none";
+        .style.display = "none";
 
 
     document
         .getElementById(
             "rawBox"
         )
-        .style.display =
-        "none";
+        .style.display = "none";
 
 
     document
         .getElementById(
             "partBox"
         )
-        .style.display =
-        "none";
+        .style.display = "none";
 
 
     document
         .getElementById(
             "result"
         )
-        .style.display =
-        "none";
+        .style.display = "none";
+
+
+    document
+        .getElementById(
+            "loading"
+        )
+        .style.display = "none";
 
 
     setStatus(
@@ -1132,24 +1212,6 @@ function resetPage(){
     );
 
 }
-
-
-/* =========================================================
-   페이지 종료
-========================================================= */
-
-window.addEventListener(
-    "beforeunload",
-    function(){
-
-        selectedFile =
-            null;
-
-        photoImage =
-            null;
-
-    }
-);
 
 </script>
 
