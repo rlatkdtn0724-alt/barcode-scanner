@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>부품번호 수량 스캐너</title>
+  <title>부품번호 수량 인식</title>
 
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
@@ -17,8 +17,13 @@
       margin: 0;
       padding: 20px;
       font-family: Arial, sans-serif;
-      background: #f3f4f6;
+      background: #f5f5f5;
       color: #222;
+    }
+
+    .wrap {
+      max-width: 480px;
+      margin: auto;
     }
 
     h2 {
@@ -26,29 +31,16 @@
       margin: 5px 0 20px;
     }
 
-    .container {
-      max-width: 500px;
-      margin: auto;
-    }
-
-    .card {
-      background: white;
-      padding: 18px;
-      border-radius: 12px;
-      margin-bottom: 15px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-
     .camera-button {
       display: block;
       width: 100%;
-      padding: 17px;
+      padding: 18px;
+      border-radius: 10px;
       background: #2563eb;
       color: white;
       text-align: center;
-      font-size: 19px;
+      font-size: 20px;
       font-weight: bold;
-      border-radius: 10px;
       cursor: pointer;
     }
 
@@ -56,129 +48,99 @@
       display: none;
     }
 
+    .result-box {
+      margin-top: 20px;
+      background: white;
+      padding: 18px;
+      border-radius: 10px;
+    }
+
+    .field {
+      margin-bottom: 18px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    .field-title {
+      font-size: 17px;
+      font-weight: bold;
+      margin-bottom: 7px;
+    }
+
+    input {
+      width: 100%;
+      padding: 15px;
+      border: 1px solid #bbb;
+      border-radius: 8px;
+      font-size: 19px;
+      background: white;
+    }
+
+    #status {
+      margin-top: 15px;
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+
     #preview {
       display: none;
       width: 100%;
       margin-top: 15px;
-      border-radius: 10px;
-      max-height: 450px;
-      object-fit: contain;
-      background: #eee;
-    }
-
-    #readButton {
-      display: none;
-      width: 100%;
-      padding: 15px;
-      margin-top: 15px;
-      background: #111827;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 17px;
-      font-weight: bold;
-    }
-
-    #readButton:disabled {
-      background: #999;
-    }
-
-    label {
-      display: block;
-      font-weight: bold;
-      font-size: 17px;
-      margin-bottom: 8px;
-    }
-
-    input.result-input {
-      width: 100%;
-      padding: 14px;
-      border: 1px solid #bbb;
       border-radius: 8px;
-      font-size: 18px;
-      margin-bottom: 18px;
-    }
-
-    #copyButton {
-      width: 100%;
-      padding: 15px;
-      background: #16a34a;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 17px;
-      font-weight: bold;
-    }
-
-    #status {
-      padding: 13px;
-      background: #e5e7eb;
-      border-radius: 8px;
-      line-height: 1.5;
-      white-space: pre-wrap;
-      font-size: 14px;
     }
   </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="wrap">
 
-  <h2>부품번호 + 수량 스캐너</h2>
+  <h2>부품번호 / 수량</h2>
 
-  <div class="card">
+  <label for="photoInput" class="camera-button">
+    📷 촬영하기
+  </label>
 
-    <label for="photoInput" class="camera-button">
-      📷 촬영하기
-    </label>
+  <input
+    id="photoInput"
+    type="file"
+    accept="image/*"
+    capture="environment"
+  >
 
-    <input
-      id="photoInput"
-      type="file"
-      accept="image/*"
-      capture="environment"
-    >
+  <img id="preview" alt="촬영한 사진">
 
-    <img id="preview" alt="촬영한 부품 태그">
+  <div class="result-box">
 
-    <button id="readButton">
-      부품번호와 수량 인식하기
-    </button>
+    <div class="field">
+      <div class="field-title">부품번호</div>
+      <input
+        id="partNumber"
+        type="text"
+        placeholder="부품번호"
+        autocomplete="off"
+      >
+    </div>
 
-  </div>
-
-  <div class="card">
-
-    <label for="partNumber">부품번호</label>
-
-    <input
-      id="partNumber"
-      class="result-input"
-      type="text"
-      placeholder="부품번호"
-      autocomplete="off"
-    >
-
-    <label for="quantity">수량</label>
-
-    <input
-      id="quantity"
-      class="result-input"
-      type="number"
-      min="1"
-      inputmode="numeric"
-      placeholder="수량"
-    >
-
-    <button id="copyButton">
-      부품번호 + 수량 복사
-    </button>
+    <div class="field">
+      <div class="field-title">수량</div>
+      <input
+        id="quantity"
+        type="number"
+        min="1"
+        inputmode="numeric"
+        placeholder="수량"
+      >
+    </div>
 
   </div>
 
   <div id="status">
-    촬영하기 버튼을 눌러 태그를 촬영해 주세요.
+    촬영하기를 눌러주세요.
   </div>
 
 </div>
@@ -186,99 +148,72 @@
 <script>
   const photoInput = document.getElementById("photoInput");
   const preview = document.getElementById("preview");
-  const readButton = document.getElementById("readButton");
   const partNumber = document.getElementById("partNumber");
   const quantity = document.getElementById("quantity");
-  const copyButton = document.getElementById("copyButton");
   const status = document.getElementById("status");
 
-  let selectedFile = null;
+  photoInput.addEventListener("change", async function () {
+    const file = photoInput.files[0];
 
-  photoInput.addEventListener("change", function () {
-    selectedFile = photoInput.files[0];
-
-    if (!selectedFile) {
+    if (!file) {
       return;
     }
 
-    preview.src = URL.createObjectURL(selectedFile);
-    preview.style.display = "block";
-    readButton.style.display = "block";
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = "none";
 
     partNumber.value = "";
     quantity.value = "";
 
-    status.textContent =
-      "사진 촬영 완료\n" +
-      "부품번호와 수량 인식하기 버튼을 눌러 주세요.";
-  });
-
-  readButton.addEventListener("click", async function () {
-    if (!selectedFile) {
-      alert("먼저 촬영해 주세요.");
-      return;
-    }
-
-    readButton.disabled = true;
-    status.textContent = "글자 인식 중입니다. 잠시 기다려 주세요.";
+    status.textContent = "인식 중...";
 
     try {
       const result = await Tesseract.recognize(
-        selectedFile,
+        file,
         "eng",
         {
           logger: function (info) {
             if (info.status === "recognizing text") {
-              const percent = Math.round(info.progress * 100);
-
               status.textContent =
-                "글자 인식 중...\n" +
-                percent + "%";
+                "인식 중... " +
+                Math.round(info.progress * 100) +
+                "%";
             }
           }
         }
       );
 
-      const originalText = result.data.text;
+      const text = cleanText(result.data.text);
 
-      console.log("OCR 원본:", originalText);
+      console.log("OCR 결과:", text);
 
-      const cleanedText = cleanText(originalText);
+      const foundPartNumber = findPartNumber(text);
+      const foundQuantity = findQuantity(text);
 
-      console.log("정리된 글자:", cleanedText);
+      partNumber.value = foundPartNumber;
+      quantity.value = foundQuantity;
 
-      const detectedPartNumber = findPartNumber(cleanedText);
-      const detectedQuantity = findQuantity(cleanedText);
-
-      partNumber.value = detectedPartNumber;
-      quantity.value = detectedQuantity;
-
-      if (detectedPartNumber && detectedQuantity) {
+      if (foundPartNumber && foundQuantity) {
+        status.textContent = "인식 완료";
+      } else if (!foundPartNumber && !foundQuantity) {
         status.textContent =
-          "인식 완료\n\n" +
-          "부품번호: " + detectedPartNumber + "\n" +
-          "수량: " + detectedQuantity;
-      } else if (!detectedPartNumber && !detectedQuantity) {
+          "인식 실패\n부품번호와 QUANTITY가 크게 보이도록 다시 촬영해 주세요.";
+      } else if (!foundPartNumber) {
         status.textContent =
-          "인식하지 못했습니다.\n\n" +
-          "부품번호와 QUANTITY 숫자가 크게 보이도록 다시 촬영해 주세요.";
-      } else if (!detectedPartNumber) {
-        status.textContent =
-          "수량은 인식했지만 부품번호를 찾지 못했습니다.";
+          "부품번호를 인식하지 못했습니다.";
       } else {
         status.textContent =
-          "부품번호는 인식했지만 QUANTITY 옆 숫자를 찾지 못했습니다.";
+          "QUANTITY 옆 수량을 인식하지 못했습니다.";
       }
 
     } catch (error) {
       console.error(error);
 
       status.textContent =
-        "인식 중 오류가 발생했습니다.\n" +
-        error.message;
+        "인식 오류가 발생했습니다.";
     }
 
-    readButton.disabled = false;
+    photoInput.value = "";
   });
 
   function cleanText(text) {
@@ -292,8 +227,8 @@
 
   function findPartNumber(text) {
     /*
-      영문+숫자가 섞인 부품번호를 찾음.
-      바코드 숫자만 있는 값은 제외함.
+      영문+숫자가 섞인 부품번호 찾기
+      바코드 숫자만 있는 값은 제외
     */
 
     const candidates = text.match(/[A-Z0-9]{8,15}/g);
@@ -302,7 +237,7 @@
       return "";
     }
 
-    const excludedWords = [
+    const excluded = [
       "QUANTITY",
       "PARTNUMBER",
       "PARTNO",
@@ -310,22 +245,23 @@
       "DESCRIPTION",
       "LOCATION",
       "PRODUCT",
-      "BMW",
-      "MIN",
-      "MAX"
+      "SUPPLIER",
+      "COUNTRY",
+      "GERMANY",
+      "BMW"
     ];
 
-    for (const candidate of candidates) {
-      if (excludedWords.includes(candidate)) {
+    for (const value of candidates) {
+      if (excluded.includes(value)) {
         continue;
       }
 
-      if (/^\d+$/.test(candidate)) {
+      if (/^\d+$/.test(value)) {
         continue;
       }
 
-      if (/[A-Z]/.test(candidate) && /\d/.test(candidate)) {
-        return candidate;
+      if (/[A-Z]/.test(value) && /\d/.test(value)) {
+        return value;
       }
     }
 
@@ -334,9 +270,8 @@
 
   function findQuantity(text) {
     /*
-      QUANTITY 바로 옆 숫자만 인식
+      QUANTITY 바로 옆 숫자만 추출
 
-      예:
       QUANTITY 5
       QUANTITY: 5
       QUANTITY-5
@@ -352,30 +287,6 @@
 
     return "";
   }
-
-  copyButton.addEventListener("click", async function () {
-    const part = partNumber.value.trim();
-    const qty = quantity.value.trim();
-
-    if (!part || !qty) {
-      alert("부품번호와 수량을 확인해 주세요.");
-      return;
-    }
-
-    const copyText = part + "\t" + qty;
-
-    try {
-      await navigator.clipboard.writeText(copyText);
-
-      status.textContent =
-        "복사 완료\n\n" +
-        "부품번호: " + part + "\n" +
-        "수량: " + qty;
-
-    } catch (error) {
-      alert(copyText);
-    }
-  });
 </script>
 
 </body>
