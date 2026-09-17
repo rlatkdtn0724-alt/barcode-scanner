@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>부품번호 수량 인식</title>
+  <title>RDC 태그 스캐너</title>
 
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
@@ -16,278 +16,442 @@
     body {
       margin: 0;
       padding: 20px;
+      background: #f3f4f6;
       font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      color: #222;
+      color: #111827;
     }
 
-    .wrap {
-      max-width: 480px;
-      margin: auto;
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
     }
 
     h2 {
       text-align: center;
-      margin: 5px 0 20px;
+      margin: 0 0 20px;
     }
 
     .camera-button {
       display: block;
       width: 100%;
       padding: 18px;
-      border-radius: 10px;
+      border: 0;
+      border-radius: 12px;
       background: #2563eb;
       color: white;
-      text-align: center;
       font-size: 20px;
       font-weight: bold;
       cursor: pointer;
+      text-align: center;
     }
 
-    #photoInput {
+    .camera-button:active {
+      background: #1d4ed8;
+    }
+
+    input[type="file"] {
       display: none;
     }
 
-    .result-box {
-      margin-top: 20px;
-      background: white;
-      padding: 18px;
+    .status {
+      margin-top: 16px;
+      padding: 12px;
       border-radius: 10px;
+      background: white;
+      text-align: center;
+      font-size: 14px;
+      white-space: pre-line;
+    }
+
+    .result-box {
+      margin-top: 16px;
+      padding: 18px;
+      background: white;
+      border-radius: 12px;
     }
 
     .field {
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
 
     .field:last-child {
       margin-bottom: 0;
     }
 
-    .field-title {
-      font-size: 17px;
-      font-weight: bold;
+    .field label {
+      display: block;
       margin-bottom: 7px;
-    }
-
-    input {
-      width: 100%;
-      padding: 15px;
-      border: 1px solid #bbb;
-      border-radius: 8px;
-      font-size: 19px;
-      background: white;
-    }
-
-    #status {
-      margin-top: 15px;
-      text-align: center;
-      color: #666;
       font-size: 14px;
-      white-space: pre-wrap;
+      font-weight: bold;
+      color: #4b5563;
     }
 
-    #preview {
-      display: none;
+    .field input {
       width: 100%;
-      margin-top: 15px;
+      padding: 14px;
+      border: 1px solid #d1d5db;
       border-radius: 8px;
+      font-size: 21px;
+      font-weight: bold;
+      background: #f9fafb;
+    }
+
+    .hint {
+      margin-top: 18px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #6b7280;
+      text-align: center;
+    }
+
+    canvas {
+      display: none;
     }
   </style>
 </head>
 
 <body>
+  <div class="container">
 
-<div class="wrap">
+    <h2>RDC 태그 스캐너</h2>
 
-  <h2>부품번호 / 수량</h2>
+    <label for="photoInput" class="camera-button">
+      📷 촬영하기
+    </label>
 
-  <label for="photoInput" class="camera-button">
-    📷 촬영하기
-  </label>
+    <input
+      id="photoInput"
+      type="file"
+      accept="image/*"
+      capture="environment"
+    >
 
-  <input
-    id="photoInput"
-    type="file"
-    accept="image/*"
-    capture="environment"
-  >
-
-  <img id="preview" alt="촬영한 사진">
-
-  <div class="result-box">
-
-    <div class="field">
-      <div class="field-title">부품번호</div>
-      <input
-        id="partNumber"
-        type="text"
-        placeholder="부품번호"
-        autocomplete="off"
-      >
+    <div id="status" class="status">
+      흰색 RDC 스티커가 화면에 크게 나오도록 촬영하세요.
     </div>
 
-    <div class="field">
-      <div class="field-title">수량</div>
-      <input
-        id="quantity"
-        type="number"
-        min="1"
-        inputmode="numeric"
-        placeholder="수량"
-      >
+    <div class="result-box">
+
+      <div class="field">
+        <label for="partNumber">부품번호</label>
+        <input
+          id="partNumber"
+          type="text"
+          placeholder="부품번호"
+          readonly
+        >
+      </div>
+
+      <div class="field">
+        <label for="quantity">수량</label>
+        <input
+          id="quantity"
+          type="text"
+          placeholder="수량"
+          readonly
+        >
+      </div>
+
     </div>
+
+    <div class="hint">
+      흰색 스티커의 Material No.와 Quantity만 읽습니다.<br>
+      바코드는 읽지 않습니다.
+    </div>
+
+    <canvas id="canvas"></canvas>
 
   </div>
 
-  <div id="status">
-    촬영하기를 눌러주세요.
-  </div>
+  <script>
+    const photoInput = document.getElementById("photoInput");
+    const statusBox = document.getElementById("status");
+    const partNumberInput = document.getElementById("partNumber");
+    const quantityInput = document.getElementById("quantity");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
 
-</div>
-
-<script>
-  const photoInput = document.getElementById("photoInput");
-  const preview = document.getElementById("preview");
-  const partNumber = document.getElementById("partNumber");
-  const quantity = document.getElementById("quantity");
-  const status = document.getElementById("status");
-
-  photoInput.addEventListener("change", async function () {
-    const file = photoInput.files[0];
-
-    if (!file) {
-      return;
+    function setStatus(message) {
+      statusBox.textContent = message;
     }
 
-    preview.src = URL.createObjectURL(file);
-    preview.style.display = "none";
+    function cleanText(text) {
+      return text
+        .replace(/[|]/g, "1")
+        .replace(/[Oo]/g, "0")
+        .replace(/[Il]/g, "1")
+        .replace(/[Ss]/g, "5")
+        .replace(/[Bb]/g, "8")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
 
-    partNumber.value = "";
-    quantity.value = "";
+    function normalizePartNumber(value) {
+      return value
+        .replace(/[^0-9]/g, "")
+        .trim();
+    }
 
-    status.textContent = "인식 중...";
+    function findPartNumber(text) {
+      const cleaned = cleanText(text);
 
-    try {
-      const result = await Tesseract.recognize(
-        file,
-        "eng",
-        {
-          logger: function (info) {
-            if (info.status === "recognizing text") {
-              status.textContent =
-                "인식 중... " +
-                Math.round(info.progress * 100) +
-                "%";
-            }
-          }
-        }
+      /*
+        BMW RDC 태그의 Material No.는
+        사진에서 보통 다음처럼 인식될 수 있음:
+
+        07 12 9 906 579
+        07129906579
+        07-12-9-906-579
+      */
+
+      const materialMatch = cleaned.match(
+        /Material\s*No\.?\s*([0-9\s\-]{8,25})/i
       );
 
-      const text = cleanText(result.data.text);
+      if (materialMatch) {
+        const number = normalizePartNumber(materialMatch[1]);
 
-      console.log("OCR 결과:", text);
-
-      const foundPartNumber = findPartNumber(text);
-      const foundQuantity = findQuantity(text);
-
-      partNumber.value = foundPartNumber;
-      quantity.value = foundQuantity;
-
-      if (foundPartNumber && foundQuantity) {
-        status.textContent = "인식 완료";
-      } else if (!foundPartNumber && !foundQuantity) {
-        status.textContent =
-          "인식 실패\n부품번호와 QUANTITY가 크게 보이도록 다시 촬영해 주세요.";
-      } else if (!foundPartNumber) {
-        status.textContent =
-          "부품번호를 인식하지 못했습니다.";
-      } else {
-        status.textContent =
-          "QUANTITY 옆 수량을 인식하지 못했습니다.";
+        if (number.length >= 9 && number.length <= 13) {
+          return number;
+        }
       }
 
-    } catch (error) {
-      console.error(error);
+      /*
+        Material No. 글자를 놓쳤을 때를 위한 보조 검색.
+        9~13자리 숫자 중 가장 앞에 있는 값을 사용.
+      */
 
-      status.textContent =
-        "인식 오류가 발생했습니다.";
-    }
+      const candidates = cleaned.match(/[0-9][0-9\s\-]{8,25}/g) || [];
 
-    photoInput.value = "";
-  });
+      for (const candidate of candidates) {
+        const number = normalizePartNumber(candidate);
 
-  function cleanText(text) {
-    return String(text)
-      .toUpperCase()
-      .replace(/[|]/g, "I")
-      .replace(/[\r\n]+/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
+        if (number.length >= 9 && number.length <= 13) {
+          return number;
+        }
+      }
 
-  function findPartNumber(text) {
-    /*
-      영문+숫자가 섞인 부품번호 찾기
-      바코드 숫자만 있는 값은 제외
-    */
-
-    const candidates = text.match(/[A-Z0-9]{8,15}/g);
-
-    if (!candidates) {
       return "";
     }
 
-    const excluded = [
-      "QUANTITY",
-      "PARTNUMBER",
-      "PARTNO",
-      "PARTNUM",
-      "DESCRIPTION",
-      "LOCATION",
-      "PRODUCT",
-      "SUPPLIER",
-      "COUNTRY",
-      "GERMANY",
-      "BMW"
-    ];
+    function findQuantity(text) {
+      const cleaned = cleanText(text);
 
-    for (const value of candidates) {
-      if (excluded.includes(value)) {
-        continue;
+      /*
+        Quantity 4
+        Quantity: 4
+        Quantity - 4
+        Quantity    4
+      */
+
+      const quantityMatch = cleaned.match(
+        /Quantit[yv]\s*[:\-]?\s*([0-9]{1,5})/i
+      );
+
+      if (quantityMatch) {
+        return quantityMatch[1];
       }
 
-      if (/^\d+$/.test(value)) {
-        continue;
+      /*
+        Quantity 글자를 놓쳤을 때,
+        사진 상단의 짧은 숫자를 보조 검색.
+      */
+
+      const shortNumbers = cleaned.match(/\b[0-9]{1,4}\b/g) || [];
+
+      for (const number of shortNumbers) {
+        if (number !== "2026") {
+          return number;
+        }
       }
 
-      if (/[A-Z]/.test(value) && /\d/.test(value)) {
-        return value;
-      }
+      return "";
     }
 
-    return "";
-  }
+    function preprocessImage(image, crop) {
+      const sourceWidth = image.width;
+      const sourceHeight = image.height;
 
-  function findQuantity(text) {
-    /*
-      QUANTITY 바로 옆 숫자만 추출
+      const sx = Math.max(0, Math.floor(sourceWidth * crop.x));
+      const sy = Math.max(0, Math.floor(sourceHeight * crop.y));
+      const sw = Math.min(
+        Math.floor(sourceWidth * crop.width),
+        sourceWidth - sx
+      );
+      const sh = Math.min(
+        Math.floor(sourceHeight * crop.height),
+        sourceHeight - sy
+      );
 
-      QUANTITY 5
-      QUANTITY: 5
-      QUANTITY-5
-    */
+      const scale = 4;
 
-    const match = text.match(
-      /QUANTITY\s*[:\-]?\s*(\d{1,5})/i
-    );
+      canvas.width = sw * scale;
+      canvas.height = sh * scale;
 
-    if (match) {
-      return match[1];
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.drawImage(
+        image,
+        sx,
+        sy,
+        sw,
+        sh,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      const imageData = ctx.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      for (let i = 0; i < imageData.data.length; i += 4) {
+        const r = imageData.data[i];
+        const g = imageData.data[i + 1];
+        const b = imageData.data[i + 2];
+
+        const gray = (r + g + b) / 3;
+
+        const value = gray > 155 ? 255 : 0;
+
+        imageData.data[i] = value;
+        imageData.data[i + 1] = value;
+        imageData.data[i + 2] = value;
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+
+      return canvas.toDataURL("image/png");
     }
 
-    return "";
-  }
-</script>
+    async function recognizeRegion(image, crop, mode) {
+      const processedImage = preprocessImage(image, crop);
 
+      const whitelist =
+        mode === "quantity"
+          ? "0123456789"
+          : "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.- ";
+
+      const result = await Tesseract.recognize(
+        processedImage,
+        "eng",
+        {
+          logger: function (message) {
+            if (message.status === "recognizing text") {
+              const percent = Math.round(message.progress * 100);
+              setStatus(
+                mode === "quantity"
+                  ? `수량 인식 중... ${percent}%`
+                  : `부품번호 인식 중... ${percent}%`
+              );
+            }
+          },
+          tessedit_pageseg_mode: "7",
+          tessedit_char_whitelist: whitelist
+        }
+      );
+
+      return result.data.text || "";
+    }
+
+    photoInput.addEventListener("change", async function () {
+      const file = photoInput.files[0];
+
+      if (!file) {
+        return;
+      }
+
+      partNumberInput.value = "";
+      quantityInput.value = "";
+
+      setStatus("사진을 분석하는 중입니다...");
+
+      const imageUrl = URL.createObjectURL(file);
+      const image = new Image();
+
+      image.onload = async function () {
+        try {
+          /*
+            촬영할 때 흰색 RDC 스티커가
+            화면 대부분을 차지하도록 찍는 것을 기준으로 함.
+
+            Material No. 영역:
+            왼쪽 위쪽 영역
+
+            Quantity 영역:
+            Material No. 오른쪽 영역
+          */
+
+          const materialCrop = {
+            x: 0.08,
+            y: 0.32,
+            width: 0.48,
+            height: 0.18
+          };
+
+          const quantityCrop = {
+            x: 0.53,
+            y: 0.32,
+            width: 0.25,
+            height: 0.18
+          };
+
+          const materialText = await recognizeRegion(
+            image,
+            materialCrop,
+            "part"
+          );
+
+          const quantityText = await recognizeRegion(
+            image,
+            quantityCrop,
+            "quantity"
+          );
+
+          const partNumber = findPartNumber(materialText);
+          const quantity = findQuantity(quantityText);
+
+          partNumberInput.value = partNumber;
+          quantityInput.value = quantity;
+
+          if (partNumber && quantity) {
+            setStatus(
+              "인식 완료\n" +
+              "부품번호: " + partNumber + "\n" +
+              "수량: " + quantity
+            );
+          } else {
+            setStatus(
+              "일부 인식 실패\n\n" +
+              "부품번호 인식값: " + (partNumber || "없음") + "\n" +
+              "수량 인식값: " + (quantity || "없음") +
+              "\n\n흰색 스티커가 화면에 더 크게 나오도록 다시 촬영하세요."
+            );
+          }
+
+        } catch (error) {
+          console.error(error);
+
+          setStatus(
+            "인식 중 오류가 발생했습니다.\n" +
+            "흰색 스티커를 가까이 찍고 다시 시도하세요."
+          );
+        } finally {
+          URL.revokeObjectURL(imageUrl);
+        }
+      };
+
+      image.onerror = function () {
+        setStatus("사진을 불러오지 못했습니다.");
+        URL.revokeObjectURL(imageUrl);
+      };
+
+      image.src = imageUrl;
+    });
+  </script>
 </body>
 </html>
