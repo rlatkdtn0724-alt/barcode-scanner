@@ -1,594 +1,248 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>부품번호 수량 OCR</title>
 
-<meta charset="UTF-8">
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
-<meta name="viewport"
-      content="width=device-width,
-               initial-scale=1.0,
-               maximum-scale=1.0,
-               user-scalable=no">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+      color: #222;
+    }
 
-<title>부품번호 스캔</title>
+    h2 {
+      margin-top: 0;
+    }
 
-<script src="https://unpkg.com/html5-qrcode"></script>
+    button,
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px;
+      margin-top: 10px;
+      font-size: 17px;
+    }
 
-<style>
+    button {
+      background: #222;
+      color: white;
+      border: 0;
+      border-radius: 8px;
+    }
 
-*{
-    box-sizing:border-box;
-    -webkit-tap-highlight-color:transparent;
-}
+    button:disabled {
+      background: #999;
+    }
 
-body{
-    margin:0;
-    background:#f4f4f4;
-    color:#111;
-    font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Noto Sans KR",
-        Arial,
-        sans-serif;
-}
+    #preview {
+      width: 100%;
+      margin-top: 15px;
+      border-radius: 8px;
+      display: none;
+    }
 
-.container{
-    width:100%;
-    max-width:600px;
-    margin:0 auto;
-    padding:18px 12px 40px;
-}
+    .result {
+      background: white;
+      padding: 15px;
+      margin-top: 15px;
+      border-radius: 8px;
+      line-height: 1.8;
+      word-break: break-all;
+    }
 
-h1{
-    text-align:center;
-    font-size:30px;
-    margin:20px 0 25px;
-    font-weight:800;
-}
+    .label {
+      font-weight: bold;
+      margin-top: 10px;
+    }
 
-button,
-input{
-    font-family:inherit;
-}
-
-.capture-button{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    width:100%;
-    height:68px;
-    border:0;
-    border-radius:15px;
-    background:#2563eb;
-    color:white;
-    font-size:21px;
-    font-weight:800;
-    cursor:pointer;
-}
-
-.capture-button:active{
-    transform:scale(.98);
-}
-
-#photoInput{
-    display:none;
-}
-
-.guide{
-    background:white;
-    border-radius:14px;
-    padding:14px;
-    margin-top:12px;
-    font-size:14px;
-    line-height:1.6;
-    color:#555;
-}
-
-#loading{
-    display:none;
-    text-align:center;
-    padding:18px 5px;
-    font-size:16px;
-    font-weight:700;
-}
-
-#status{
-    min-height:25px;
-    margin:15px 0;
-    text-align:center;
-    font-size:16px;
-    font-weight:700;
-}
-
-.success{
-    color:#16833b;
-}
-
-.error{
-    color:#d93025;
-}
-
-.warning{
-    color:#996600;
-}
-
-.result{
-    display:none;
-    background:white;
-    border-radius:16px;
-    padding:20px;
-    margin-top:15px;
-    box-shadow:0 3px 15px rgba(0,0,0,.08);
-}
-
-.field{
-    margin-bottom:18px;
-}
-
-.field:last-child{
-    margin-bottom:0;
-}
-
-.field label{
-    display:block;
-    color:#666;
-    font-size:14px;
-    margin-bottom:7px;
-}
-
-.field input{
-    width:100%;
-    height:58px;
-    border:1px solid #d1d5db;
-    border-radius:12px;
-    padding:0 14px;
-    font-size:25px;
-    font-weight:800;
-    background:#fff;
-}
-
-#partNo{
-    letter-spacing:1px;
-}
-
-#quantity{
-    font-size:25px;
-}
-
-.action-button{
-    width:100%;
-    height:58px;
-    border:0;
-    border-radius:13px;
-    background:#111827;
-    color:white;
-    font-size:18px;
-    font-weight:800;
-    margin-top:12px;
-}
-
-#retryButton{
-    display:none;
-    background:#e5e7eb;
-    color:#111827;
-}
-
-.small{
-    font-size:13px;
-    color:#777;
-    margin-top:8px;
-}
-
-</style>
-
+    #status {
+      margin-top: 15px;
+      color: #555;
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="container">
+  <h2>부품번호 + 수량 인식</h2>
 
-<h1>부품번호 스캔</h1>
-
-<label
-    for="photoInput"
-    class="capture-button">
-
-    📷 바코드 촬영
-
-</label>
-
-<input
+  <input
     id="photoInput"
     type="file"
     accept="image/*"
-    capture="environment">
+    capture="environment"
+  >
 
-<div class="guide">
+  <img id="preview">
 
-    <strong>촬영 방법</strong><br>
-    바코드가 화면에서 크게 보이도록 촬영해주세요.<br>
-    바코드만 가까이 찍을수록 인식이 빨라집니다.
+  <button id="readButton" disabled>
+    사진에서 부품번호와 수량 읽기
+  </button>
 
-</div>
+  <div id="status"></div>
 
-<div
-    id="loading">
+  <div class="result">
+    <div class="label">부품번호</div>
+    <input id="partNumber" placeholder="부품번호">
 
-    🔍 바코드 인식 중...
+    <div class="label">수량</div>
+    <input id="quantity" type="number" min="1" inputmode="numeric" placeholder="수량">
 
-</div>
-
-<div
-    id="status"
-    class="warning">
-
-    바코드를 촬영해주세요.
-
-</div>
-
-<div
-    id="result"
-    class="result">
-
-    <div class="field">
-
-        <label for="partNo">
-            부품번호 11자리
-        </label>
-
-        <input
-            id="partNo"
-            type="text"
-            inputmode="text"
-            maxlength="11"
-            autocomplete="off">
-
-        <div class="small">
-            Code39에서 마지막 11자리를 자동 추출합니다.
-        </div>
-
-    </div>
-
-    <div class="field">
-
-        <label for="quantity">
-            수량
-        </label>
-
-        <input
-            id="quantity"
-            type="number"
-            min="1"
-            inputmode="numeric"
-            placeholder="수량 입력">
-
-    </div>
-
-    <button
-        class="action-button"
-        onclick="copyResult()">
-
-        📋 부품번호 + 수량 복사
-
+    <button id="copyButton">
+      부품번호 + 수량 복사
     </button>
+  </div>
 
-</div>
+  <script>
+    const photoInput = document.getElementById("photoInput");
+    const preview = document.getElementById("preview");
+    const readButton = document.getElementById("readButton");
+    const status = document.getElementById("status");
+    const partNumber = document.getElementById("partNumber");
+    const quantity = document.getElementById("quantity");
+    const copyButton = document.getElementById("copyButton");
 
-<button
-    id="retryButton"
-    class="action-button"
-    onclick="resetPage()">
+    let selectedFile = null;
 
-    📷 다시 촬영
+    photoInput.addEventListener("change", () => {
+      selectedFile = photoInput.files[0];
 
-</button>
-
-</div>
-
-<script>
-
-let selectedFile = null;
-
-
-/* 사진 선택 */
-
-document
-    .getElementById("photoInput")
-    .addEventListener(
-        "change",
-        handlePhoto
-    );
-
-
-function handlePhoto(event){
-
-    const file =
-        event.target.files &&
-        event.target.files[0];
-
-    if(!file){
+      if (!selectedFile) {
+        readButton.disabled = true;
         return;
-    }
+      }
 
-    selectedFile = file;
+      preview.src = URL.createObjectURL(selectedFile);
+      preview.style.display = "block";
+      readButton.disabled = false;
+      status.textContent = "사진 준비 완료";
+    });
 
-    analyzePhoto();
-
-}
-
-
-/* 사진 분석 */
-
-async function analyzePhoto(){
-
-    if(!selectedFile){
+    readButton.addEventListener("click", async () => {
+      if (!selectedFile) {
+        alert("사진을 먼저 촬영해 주세요.");
         return;
-    }
+      }
 
-    const loading =
-        document.getElementById("loading");
+      readButton.disabled = true;
+      status.textContent = "글자 인식 중... 잠시만 기다려 주세요.";
 
-    const retry =
-        document.getElementById("retryButton");
+      try {
+        const result = await Tesseract.recognize(
+          selectedFile,
+          "eng",
+          {
+            logger: info => {
+              if (info.status === "recognizing text") {
+                status.textContent =
+                  "글자 인식 중... " +
+                  Math.round(info.progress * 100) +
+                  "%";
+              }
+            }
+          }
+        );
 
-    loading.style.display = "block";
+        const text = result.data.text;
 
-    retry.style.display = "none";
+        console.log("OCR 전체 결과:", text);
 
-    setStatus(
-        "바코드 인식 중...",
-        "warning"
-    );
+        const cleanedText = text
+          .toUpperCase()
+          .replace(/[|]/g, "I")
+          .replace(/[\n\r]+/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
 
-    try{
+        const part = findPartNumber(cleanedText);
+        const qty = findQuantity(cleanedText);
 
-        const readerId =
-            "barcodeReader";
+        partNumber.value = part || "";
+        quantity.value = qty || "";
 
-        const reader =
-            document.createElement("div");
-
-        reader.id = readerId;
-
-        reader.style.position = "fixed";
-        reader.style.left = "-10000px";
-        reader.style.top = "-10000px";
-        reader.style.width = "1px";
-        reader.style.height = "1px";
-
-        document.body.appendChild(reader);
-
-        const scanner =
-            new Html5Qrcode(readerId);
-
-        const raw =
-            await scanner.scanFile(
-                selectedFile,
-                false
-            );
-
-        try{
-            await scanner.clear();
-        }catch(e){}
-
-        reader.remove();
-
-        const part =
-            extractLast11(raw);
-
-        if(!part){
-
-            throw new Error(
-                "11자리 부품번호를 추출하지 못했습니다."
-            );
-
+        if (part || qty) {
+          status.textContent = "인식 완료. 결과를 확인해 주세요.";
+        } else {
+          status.textContent =
+            "인식 실패. 부품번호와 수량이 크게 보이도록 다시 촬영해 주세요.";
         }
 
-        document
-            .getElementById("partNo")
-            .value = part;
-
-        document
-            .getElementById("result")
-            .style.display = "block";
-
-        setStatus(
-            "✅ 부품번호 인식 완료",
-            "success"
-        );
-
-        document
-            .getElementById("quantity")
-            .focus();
-
-    }catch(error){
-
+      } catch (error) {
         console.error(error);
+        status.textContent = "글자 인식 중 오류가 발생했습니다.";
+      }
 
-        setStatus(
-            "❌ 인식 실패. 바코드를 더 크게 촬영해주세요.",
-            "error"
-        );
+      readButton.disabled = false;
+    });
 
+    function findPartNumber(text) {
+      const matches = text.match(/[A-Z0-9]{8,15}/g);
+
+      if (!matches) {
+        return "";
+      }
+
+      const filtered = matches.filter(value => {
+        return ![
+          "PARTNUMBER",
+          "PARTNO",
+          "QUANTITY",
+          "QTY",
+          "BMW",
+          "MIN",
+          "MAX"
+        ].includes(value);
+      });
+
+      if (filtered.length === 0) {
+        return "";
+      }
+
+      return filtered[0];
     }
 
-    loading.style.display = "none";
+    function findQuantity(text) {
+      let match;
 
-    retry.style.display = "block";
+      match = text.match(/(?:QTY|QUANTITY|수량)\s*[:\-]?\s*(\d{1,5})/i);
 
-}
+      if (match) {
+        return match[1];
+      }
 
+      match = text.match(/(\d{1,5})\s*(?:EA|PCS|개)/i);
 
-/* 마지막 11자리 추출 */
+      if (match) {
+        return match[1];
+      }
 
-function extractLast11(raw){
-
-    if(
-        raw === null ||
-        raw === undefined
-    ){
-
-        return null;
-
+      return "";
     }
 
-    let value =
-        String(raw)
-            .trim()
-            .toUpperCase();
+    copyButton.addEventListener("click", async () => {
+      const part = partNumber.value.trim();
+      const qty = quantity.value.trim();
 
-    value =
-        value.replace(
-            /^\*+/,
-            ""
-        );
-
-    value =
-        value.replace(
-            /\*+$/,
-            ""
-        );
-
-    value =
-        value.replace(
-            /\s+/g,
-            ""
-        );
-
-    if(value.length < 11){
-
-        return null;
-
-    }
-
-    return value.slice(-11);
-
-}
-
-
-/* 결과 복사 */
-
-async function copyResult(){
-
-    const part =
-        document
-            .getElementById("partNo")
-            .value
-            .trim();
-
-    const quantity =
-        document
-            .getElementById("quantity")
-            .value
-            .trim();
-
-    if(!part){
-
-        setStatus(
-            "부품번호를 확인해주세요.",
-            "error"
-        );
-
+      if (!part || !qty) {
+        alert("부품번호와 수량을 모두 확인해 주세요.");
         return;
+      }
 
-    }
+      const copyText = part + "\t" + qty;
 
-    if(!quantity || Number(quantity) <= 0){
-
-        setStatus(
-            "수량을 입력해주세요.",
-            "error"
-        );
-
-        return;
-
-    }
-
-    const text =
-        part + "\t" + quantity;
-
-    try{
-
-        await navigator.clipboard.writeText(text);
-
-        setStatus(
-            "✅ 복사 완료: " +
-            part +
-            " / 수량 " +
-            quantity,
-            "success"
-        );
-
-    }catch(error){
-
-        setStatus(
-            "부품번호와 수량을 확인해주세요.",
-            "warning"
-        );
-
-    }
-
-}
-
-
-/* 상태 표시 */
-
-function setStatus(
-    text,
-    type
-){
-
-    const status =
-        document.getElementById("status");
-
-    status.textContent =
-        text;
-
-    status.className =
-        type || "";
-
-}
-
-
-/* 초기화 */
-
-function resetPage(){
-
-    selectedFile = null;
-
-    document
-        .getElementById("photoInput")
-        .value = "";
-
-    document
-        .getElementById("result")
-        .style.display = "none";
-
-    document
-        .getElementById("retryButton")
-        .style.display = "none";
-
-    document
-        .getElementById("loading")
-        .style.display = "none";
-
-    document
-        .getElementById("partNo")
-        .value = "";
-
-    document
-        .getElementById("quantity")
-        .value = "";
-
-    setStatus(
-        "바코드를 촬영해주세요.",
-        "warning"
-    );
-
-}
-
-</script>
+      try {
+        await navigator.clipboard.writeText(copyText);
+        status.textContent = "부품번호와 수량이 복사되었습니다.";
+      } catch (error) {
+        alert(copyText);
+      }
+    });
+  </script>
 
 </body>
 </html>
